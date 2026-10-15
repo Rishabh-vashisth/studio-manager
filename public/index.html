@@ -1,0 +1,2302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+</head>
+<body>
+<title>Studio Manager</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Rozha+One&display=swap">
+<style>
+/* Layout concept: a left rail of five rooms on desktop (bottom bar on phones), one working column,
+   the manager's voice in a deep plum band at the top of Today, a handloom selvedge under the header. */
+:root {
+  --bg: #ECE6EA;
+  --surface: #F9F6F8;
+  --surface-2: #E3DAE1;
+  --ink: #261520;
+  --ink-2: #5F4C59;
+  --line: #D4C8D1;
+  --accent: #6E2A5B;
+  --on-accent: #FFFFFF;
+  --hero: #5A2049;
+  --hero-2: #7A3B67;
+  --on-hero: #FBF0F6;
+  --saffron: #E9A21E;
+  --leaf: #3C7B55;
+  --teal: #1E7380;
+  --rust: #B0342E;
+  --font-display: 'Rozha One', Georgia, 'Times New Roman', serif;
+  --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #160D14;
+    --surface: #221420;
+    --surface-2: #2E1C2A;
+    --ink: #F4EAF1;
+    --ink-2: #BBA7B5;
+    --line: #432E3E;
+    --accent: #E18BC8;
+    --on-accent: #210F1C;
+    --hero: #4B1B3E;
+    --hero-2: #6B2F59;
+    --on-hero: #FBF0F6;
+    --saffron: #F0B240;
+    --leaf: #6BB88A;
+    --teal: #5CB7C4;
+    --rust: #E8736C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #160D14;
+  --surface: #221420;
+  --surface-2: #2E1C2A;
+  --ink: #F4EAF1;
+  --ink-2: #BBA7B5;
+  --line: #432E3E;
+  --accent: #E18BC8;
+  --on-accent: #210F1C;
+  --hero: #4B1B3E;
+  --hero-2: #6B2F59;
+  --on-hero: #FBF0F6;
+  --saffron: #F0B240;
+  --leaf: #6BB88A;
+  --teal: #5CB7C4;
+  --rust: #E8736C;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+h1, h2, h3, p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.muted { color: var(--ink-2); }
+.small { font-size: 13px; }
+
+/* Header and selvedge */
+.top { background: var(--surface); border-bottom: 1px solid var(--line); }
+.gutter {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.top-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 14px; max-width: 1120px; margin: 0 auto; }
+.brand { font-family: var(--font-display); font-size: 22px; line-height: 1.1; overflow-wrap: anywhere; min-width: 0; }
+.brand small { display: block; font-family: var(--font-body); font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+.chip { font-size: 12px; padding: 4px 10px; border-radius: 99px; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.selvedge {
+  height: 8px;
+  background: repeating-linear-gradient(90deg,
+    var(--saffron) 0 18px, var(--accent) 18px 24px, var(--teal) 24px 42px,
+    var(--leaf) 42px 48px, var(--rust) 48px 66px, var(--accent) 66px 72px);
+}
+.banner { background: color-mix(in srgb, var(--saffron) 22%, var(--surface)); border-bottom: 1px solid var(--line); padding-block: 8px; font-size: 14px; }
+.banner > div { max-width: 1120px; margin: 0 auto; }
+
+/* Shell */
+.shell { display: grid; grid-template-columns: 188px minmax(0, 1fr); gap: 36px; max-width: 1120px; margin: 0 auto; padding-block: 28px 56px; }
+.nav { position: sticky; top: 20px; align-self: start; display: flex; flex-direction: column; gap: 2px; }
+.nav button {
+  text-align: left; background: none; border: 0; padding: 9px 12px; border-radius: 9px;
+  font-weight: 500; color: var(--ink-2); cursor: pointer;
+}
+.nav button:hover { background: var(--surface-2); color: var(--ink); }
+.nav button[aria-current="page"] { background: var(--surface-2); color: var(--ink); font-weight: 700; }
+main { min-width: 0; display: flex; flex-direction: column; gap: 32px; }
+
+@media (max-width: 840px) {
+  .shell { grid-template-columns: minmax(0, 1fr); padding-block: 20px 100px; gap: 0; }
+  .nav {
+    position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 20; flex-direction: row; gap: 0;
+    background: var(--surface); border-top: 1px solid var(--line);
+    padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
+  }
+  .nav button { flex: 1; text-align: center; padding: 10px 2px; font-size: 13px; }
+}
+
+/* Type */
+.view-title { font-family: var(--font-display); font-size: clamp(28px, 5vw, 36px); line-height: 1.08; font-weight: 400; text-wrap: balance; overflow-wrap: anywhere; }
+h2 { font-size: 17px; font-weight: 700; }
+h3 { font-size: 15px; font-weight: 700; }
+.head-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.sec { display: flex; flex-direction: column; gap: 14px; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* Buttons */
+.btn {
+  font-weight: 600; font-size: 14px; padding: 9px 15px; border-radius: 9px; border: 1px solid transparent;
+  background: var(--accent); color: var(--on-accent); cursor: pointer; text-align: center;
+}
+.btn:hover { filter: brightness(1.06); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.quiet { background: var(--surface-2); color: var(--ink); }
+.btn.line { background: transparent; border-color: var(--line); color: var(--ink); }
+.btn.danger { background: var(--rust); color: #fff; }
+.btn.on-hero { background: var(--on-hero); color: var(--hero); }
+.btn.sm { padding: 6px 11px; font-size: 13px; }
+
+/* Surfaces */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+.rows > .row { padding-block: 12px; border-top: 1px solid var(--line); }
+.rows > .row:first-child { border-top: 0; padding-top: 0; }
+.rows > .row:last-child { padding-bottom: 0; }
+
+/* Manager hero */
+.hero { background: var(--hero); color: var(--on-hero); border-radius: 14px; padding: 26px 26px 24px; display: flex; flex-direction: column; gap: 10px; }
+.hero .greet { font-size: 14px; opacity: .8; }
+.hero h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 5.6vw, 40px); line-height: 1.06; text-wrap: balance; }
+.hero p.body { max-width: 62ch; font-size: 16px; opacity: .94; }
+.hero .acts { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+
+/* Pills */
+.pill { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; padding: 3px 10px 3px 9px; border-radius: 99px; background: var(--surface-2); color: var(--ink); white-space: nowrap; }
+.pill::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-2); }
+.pill.overdue { background: color-mix(in srgb, var(--rust) 18%, var(--surface)); }
+.pill.overdue::before { background: var(--rust); }
+.pill.at-risk { background: color-mix(in srgb, var(--saffron) 26%, var(--surface)); }
+.pill.at-risk::before { background: var(--saffron); }
+.pill.due-today { background: color-mix(in srgb, var(--teal) 20%, var(--surface)); }
+.pill.due-today::before { background: var(--teal); }
+.pill.on-track, .pill.done, .pill.ready { background: color-mix(in srgb, var(--leaf) 20%, var(--surface)); }
+.pill.on-track::before, .pill.done::before, .pill.ready::before { background: var(--leaf); }
+.pill.example { background: transparent; border: 1px dashed var(--ink-2); color: var(--ink-2); }
+.pill.example::before { display: none; }
+
+/* Attention items */
+.attn { display: flex; flex-direction: column; gap: 12px; }
+.attn-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.attn-title { font-weight: 700; overflow-wrap: anywhere; }
+.rescue { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.rescue-item { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; font-size: 14px; }
+.rescue-item p { color: var(--ink-2); }
+.acts { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Tasks */
+.task { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: start; }
+.task input[type=checkbox] { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); }
+.task .t-title { overflow-wrap: anywhere; }
+.task.done .t-title { text-decoration: line-through; color: var(--ink-2); }
+.t-meta { font-size: 13px; color: var(--ink-2); display: flex; gap: 4px 12px; flex-wrap: wrap; }
+.t-when { font-size: 13px; white-space: nowrap; color: var(--ink-2); }
+.t-when.late { color: var(--rust); font-weight: 600; }
+
+/* Forms */
+input[type=text], input[type=date], select, textarea {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; width: 100%; min-width: 0;
+}
+textarea { resize: vertical; min-height: 76px; }
+label.f { display: flex; flex-direction: column; gap: 5px; font-weight: 600; font-size: 14px; }
+label.f span.hint { font-weight: 400; font-size: 13px; color: var(--ink-2); }
+.fgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.inline-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 170px) auto; gap: 8px; align-items: center; }
+@media (max-width: 560px) { .inline-form { grid-template-columns: minmax(0, 1fr); } }
+.sel-sm { padding: 5px 8px; font-size: 13px; width: auto; max-width: 150px; }
+
+/* Project cards and segments */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+.proj { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; cursor: pointer; width: 100%; }
+.proj:hover { border-color: var(--accent); }
+.proj-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.proj h3 { font-size: 17px; overflow-wrap: anywhere; }
+.segs { display: flex; gap: 3px; }
+.seg { flex: 1; height: 6px; border-radius: 3px; background: var(--surface-2); }
+.seg.done { background: var(--leaf); }
+.seg.on-track, .seg.due-today { background: var(--accent); }
+.seg.at-risk { background: var(--saffron); }
+.seg.overdue { background: var(--rust); }
+.facts { display: flex; gap: 6px 22px; flex-wrap: wrap; font-size: 14px; }
+.facts b { font-weight: 700; }
+
+/* Mood */
+.mood { display: flex; flex-direction: column; gap: 6px; min-width: 150px; }
+.mood-top { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; }
+.meter { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.meter > span { display: block; height: 100%; border-radius: 4px; background: var(--leaf); }
+.meter.warn > span { background: var(--saffron); }
+.meter.bad > span { background: var(--rust); }
+.quote { font-size: 14px; color: var(--ink-2); font-style: italic; overflow-wrap: anywhere; }
+
+/* Stage timeline */
+.stages { display: flex; flex-direction: column; }
+.stage { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 14px; }
+.rail { position: relative; display: flex; justify-content: center; }
+.rail::after { content: ''; position: absolute; top: 28px; bottom: -4px; width: 2px; background: var(--line); }
+.stage:last-child .rail::after { display: none; }
+.node { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); margin-top: 3px; display: grid; place-items: center; z-index: 1; }
+.node.done { background: var(--leaf); border-color: var(--leaf); }
+.node.done::after { content: ''; width: 6px; height: 10px; border: solid var(--surface); border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-1px, -1px); }
+.node.cur { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); }
+.node.overdue { border-color: var(--rust); }
+.s-body { padding-bottom: 24px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.s-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.s-name { font-weight: 700; font-size: 16px; }
+.s-name button { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+.s-date { font-size: 14px; color: var(--ink-2); }
+.returned { background: color-mix(in srgb, var(--rust) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--rust) 40%, var(--line)); border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+.returned ul { margin: 6px 0 0; padding-left: 18px; }
+.tasks-box { display: flex; flex-direction: column; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+
+/* Plan panel */
+.plan-dates { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px 18px; }
+.plan-dates label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; }
+.problems { color: var(--rust); font-size: 14px; }
+
+/* Checklists */
+.check { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; cursor: pointer; }
+.check input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); }
+.check .hint { display: block; font-size: 13px; color: var(--ink-2); }
+details.acc { border-top: 1px solid var(--line); padding-block: 12px; }
+details.acc summary { cursor: pointer; font-weight: 700; }
+details.acc ul { margin: 10px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+
+/* Log */
+.log { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+.log .when { color: var(--ink-2); font-size: 13px; }
+
+/* Scorecard */
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 18px; }
+.score .num { font-family: var(--font-display); font-size: 34px; line-height: 1; }
+.score .lbl { font-size: 13px; color: var(--ink-2); margin-top: 4px; }
+
+/* Empty */
+.empty { border: 1px dashed var(--line); border-radius: 12px; padding: 26px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.empty h3 { font-size: 17px; }
+.empty p { color: var(--ink-2); max-width: 56ch; }
+
+/* People cards */
+.people { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.person { display: flex; flex-direction: column; gap: 12px; }
+.person h3 { font-size: 17px; overflow-wrap: anywhere; }
+.stat-row { display: flex; gap: 18px; font-size: 13px; color: var(--ink-2); flex-wrap: wrap; }
+.stat-row b { display: block; font-size: 18px; color: var(--ink); font-weight: 700; }
+dl.kv { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-size: 14px; }
+dl.kv dt { color: var(--ink-2); }
+dl.kv dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Modal and toast */
+.scrim { position: fixed; inset: 0; background: rgba(20, 8, 17, .55); z-index: 40; }
+.sheet {
+  position: fixed; z-index: 41; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(580px, calc(100% - 32px)); max-height: calc(100% - 40px); overflow: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.sheet h2 { font-family: var(--font-display); font-weight: 400; font-size: 24px; }
+.sheet .foot { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.stack { display: flex; flex-direction: column; gap: 14px; }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: 24px; z-index: 50; max-width: min(520px, calc(100% - 32px));
+  background: var(--ink); color: var(--bg); padding: 11px 16px; border-radius: 10px; font-size: 14px; font-weight: 500;
+}
+.toast.error { background: var(--rust); color: #fff; }
+@media (max-width: 840px) { .toast { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); } }
+
+.loading { padding: 40px 0; color: var(--ink-2); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .btn, .proj, .nav button { transition: background-color .15s, border-color .15s, filter .15s; }
+}
+
+/* Client brief */
+.dv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+@media (max-width: 560px) { .dv-grid { grid-template-columns: minmax(0, 1fr); } }
+.check.dv { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.check.dv strong { display: block; font-weight: 600; }
+fieldset.dv-set { border: 0; padding: 0; margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+fieldset.dv-set legend { padding: 0; font-weight: 600; margin-bottom: 8px; }
+.tag { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 99px; background: color-mix(in srgb, var(--saffron) 26%, var(--surface)); color: var(--ink); }
+.grps { display: flex; flex-direction: column; gap: 8px; }
+.grp { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.grp-head { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; background: none; border: 0; color: var(--ink); font: inherit; font-weight: 600; text-align: left; cursor: pointer; border-radius: 10px; }
+.grp-body { padding: 4px 14px 14px; }
+.talk { display: flex; flex-direction: column; gap: 10px; }
+.turn { border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; display: flex; flex-direction: column; gap: 4px; }
+.turn p { margin: 0; }
+.turn-q { font-weight: 600; }
+.turn-save { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+.turn-save .sel-sm { max-width: 220px; }
+.ask-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip-btn { font: inherit; font-size: 13px; padding: 5px 11px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; text-align: left; }
+.chip-btn:hover { border-color: var(--accent); }
+
+</style>
+
+<header class="top">
+  <div class="top-in gutter">
+    <div class="brand"><span id="studio-name">Your studio</span><small>Studio Manager</small></div>
+    <span class="chip" id="sync">Opening</span>
+  </div>
+  <div class="selvedge" aria-hidden="true"></div>
+</header>
+<div class="banner gutter" id="banner" hidden><div>You can view this studio but not change it. Ask the owner for edit access.</div></div>
+
+<div class="shell gutter">
+  <nav class="nav" id="nav" aria-label="Sections"></nav>
+  <main id="view"><p class="loading">Opening your studio.</p></main>
+</div>
+
+<div id="modal-root" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+const StudioLogic = (function () {
+  'use strict';
+
+  // ---------- Deliverables the studio offers (clients choose from these) ----------
+
+  const DELIVERABLES = [
+    { key: 'concept', name: 'Interior concept and space planning', purpose: 'Establish layout, zoning and furniture arrangement', weight: 18, example: 'e.g. Keep the pooja corner apart from the TV area' },
+    { key: 'variations', name: 'Design variations', purpose: 'Compare different arrangements or design directions', weight: 10, example: 'e.g. One traditional and one contemporary option for the living room' },
+    { key: 'materials', name: 'Material variations', purpose: 'Compare flooring, walls, wood, stone, fabrics and more', weight: 12, example: 'e.g. Three flooring options, with Kota stone on the balcony' },
+    { key: 'lighting', name: 'Lighting variations', purpose: 'Daylight, warm evening, dramatic and functional lighting', weight: 8, example: 'e.g. Show the living room at 7pm with the diyas lit' },
+    { key: 'renders', name: 'Photorealistic renders', purpose: 'Final presentation-quality images', weight: 24, example: 'e.g. Living room, kitchen and master bedroom, two angles each' },
+    { key: 'walkthrough', name: 'Walkthroughs', purpose: 'Understand the space spatially', weight: 12, example: 'e.g. A video the family can show relatives' },
+    { key: 'interactive', name: '360° and interactive', purpose: 'Explore the space more immersively', weight: 8, example: 'e.g. A link the elders can open on a phone' },
+    { key: 'cinematic', name: 'Unreal cinematic', purpose: 'Premium presentation and marketing content', weight: 14, example: 'e.g. A film for the housewarming and for our website' },
+  ];
+  const CORE_DELIVERABLES = ['concept', 'materials', 'renders'];
+
+  // Older projects used these stage names. They still open and deliver.
+  const LEGACY = {
+    brief: { key: 'brief', name: 'Brief and emotional goal', weight: 10 },
+    layout: { key: 'layout', name: 'Spatial layout options', weight: 15 },
+    final: { key: 'final', name: 'Final presentation', weight: 10 },
+  };
+
+  // ---------- Quality gate ----------
+
+  const UNIVERSAL_CHECKS = [
+    { key: 'need', label: "Meets this client's stated need and emotion", hint: 'Check it against the brief, not only our own taste.' },
+    { key: 'promise', label: 'Matches what we promised the client', hint: 'Number of options, rooms covered and format agreed.' },
+    { key: 'lively', label: 'Feels lively and positive, not cold or sterile', hint: 'The home should feel warm the moment you see it.' },
+  ];
+
+  const STAGE_CHECKS = {
+    concept: [
+      { key: 'zoning', label: 'Zoning is clear: public, private and service areas', hint: 'A guest knows where to sit. The family has privacy.' },
+      { key: 'routine', label: 'The furniture arrangement fits how this family actually lives', hint: 'Check it against the routine in the brief.' },
+      { key: 'rest', label: 'Every room has a calm resting area', hint: 'Rich areas need somewhere quiet to breathe.' },
+      { key: 'flow', label: 'Circulation works for elders, children and guests', hint: 'Walk the plan with each of them in mind.' },
+    ],
+    variations: [
+      { key: 'different', label: 'Options are genuinely different from each other', hint: 'Different directions, not three versions of the same plan.' },
+      { key: 'answers', label: "Each option answers the client's need in its own way", hint: 'Every option should still feel like a home for this family.' },
+      { key: 'tradeoffs', label: 'The trade-offs between options are explained plainly', hint: 'What the client gains and gives up with each one.' },
+    ],
+    materials: [
+      { key: 'rich', label: 'Rich fabric, wood and stone in every room', hint: 'Materials should be visible and generous.' },
+      { key: 'variety', label: 'Material options are genuinely different from each other', hint: 'Different character, not small tone changes.' },
+      { key: 'craft', label: 'Handcrafted or heritage pieces are included', hint: 'Carved or inlaid wood, handloom textiles, antique rugs.' },
+      { key: 'together', label: 'Flooring, walls and fabrics are shown together on one board', hint: 'Materials are judged side by side, never alone.' },
+    ],
+    lighting: [
+      { key: 'modes', label: 'Every lighting mode the client asked for is shown', hint: 'Daylight, warm evening, dramatic, functional.' },
+      { key: 'same', label: 'Each mode uses the same camera angle', hint: 'So the client compares the light, not the framing.' },
+      { key: 'warm', label: 'Evening lighting is warm and layered', hint: 'Lamps and brass or glass accents, not one flat source.' },
+    ],
+    renders: [
+      { key: 'anchor', label: 'Each room has one strong anchor', hint: 'A saturated wall color or a hero piece sets the room.' },
+      { key: 'palette', label: 'Layered patterns repeat 2 to 3 colors', hint: 'Rich, never chaotic.' },
+      { key: 'art', label: 'There is large, colorful art with presence', hint: 'Art that sets the mood of the room.' },
+      { key: 'life', label: 'Fresh flowers or greenery are in the frame', hint: 'Life in every hero view.' },
+      { key: 'light', label: 'Lighting is warm and layered', hint: 'Lamps and brass or glass accents, not one flat source.' },
+      { key: 'sharp', label: 'Renders are sharp and well lit', hint: 'Would you put it on the website as it is?' },
+      { key: 'consistent', label: 'Style is consistent across all rooms', hint: 'One home, one story.' },
+    ],
+    walkthrough: [
+      { key: 'smooth', label: 'The walkthrough is smooth and covers the whole home', hint: 'No jumps, no missing rooms.' },
+      { key: 'match', label: 'Colors and materials match the renders', hint: 'What the client approved is what they see.' },
+    ],
+    interactive: [
+      { key: 'rooms', label: 'Every key room has a viewpoint', hint: 'Living, dining, bedrooms and entrance at least.' },
+      { key: 'phone', label: 'It loads and moves smoothly on a phone', hint: 'Most clients will open it on their phone first.' },
+      { key: 'match', label: 'Colors and materials match the renders', hint: 'What the client approved is what they see.' },
+      { key: 'self', label: 'The client can explore it without help', hint: 'A clear starting point and simple controls.' },
+    ],
+    cinematic: [
+      { key: 'story', label: 'It tells a short story with an emotional beat', hint: 'Arriving home, the family gathering, the evening glow.' },
+      { key: 'hero', label: 'Hero shots look like editorial photography', hint: 'Frame them as you would for a magazine.' },
+      { key: 'match', label: 'The look matches the approved renders', hint: 'Same colors, same materials, same mood.' },
+      { key: 'polish', label: 'No engine artifacts: flicker, pop-in, clipping or placeholder assets', hint: 'Watch it full screen, start to end.' },
+      { key: 'fit', label: 'It works for the website and for marketing', hint: 'Right length, right aspect ratios, and sound we may legally use.' },
+    ],
+    // Older projects
+    brief: [{ key: 'words', label: "The emotional goal is written in the client's own words", hint: 'One or two sentences they would sign off on.' }],
+    layout: [
+      { key: 'different', label: 'Layout options are genuinely different from each other', hint: 'Not three versions of the same plan.' },
+      { key: 'rest', label: 'Every room has a calm resting area', hint: 'Rich areas need somewhere quiet to breathe.' },
+    ],
+    final: [
+      { key: 'story', label: "The presentation tells the client's story", hint: 'Their need, their emotion, how the design answers it.' },
+      { key: 'consistent', label: 'Style is consistent across the whole project', hint: 'Every image looks like the same home.' },
+    ],
+  };
+
+  const PORTFOLIO_CHECKS = [
+    { key: 'hero', label: 'Hero renders look like editorial photos' },
+    { key: 'closeups', label: 'Each room has close-ups of fabric, wood and stone' },
+    { key: 'walk', label: 'The walkthrough is smooth and shows the full home' },
+    { key: 'consistent', label: 'Colors and materials look the same across all images' },
+    { key: 'story', label: 'The project has a short story: need, emotion, answer' },
+    { key: 'lively', label: 'Every image clearly reads as lively and positive' },
+    { key: 'own', label: 'Only our own work is shown, no magazine reference photos' },
+  ];
+
+  function stageDef(key) {
+    return DELIVERABLES.find((s) => s.key === key) || LEGACY[key] || { key: key, name: key, weight: 10 };
+  }
+
+  function clip(s, n) {
+    s = String(s);
+    return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s;
+  }
+
+  function checksFor(stageKey, project) {
+    const demand = project && project.brief && project.brief.demands ? String(project.brief.demands[stageKey] || '').trim() : '';
+    const extra = demand ? [{ key: 'demand', label: 'Delivers what the client asked for: "' + clip(demand, 90) + '"', hint: 'Their own words from the brief.' }] : [];
+    return (STAGE_CHECKS[stageKey] || []).concat(extra, UNIVERSAL_CHECKS);
+  }
+
+  // ---------- The client brief ----------
+
+  const BRIEF_GROUPS = [
+    {
+      key: 'people', title: 'Who lives here',
+      questions: [
+        { key: 'household', essential: true, label: 'Who will live in the home, and how old are they?', hint: 'Include elders, children, pets and anyone who stays for long visits.' },
+        { key: 'routine', label: 'What do a normal weekday and a weekend look like at home?', hint: 'Where do people cook, gather, work and rest?' },
+        { key: 'hosting', label: 'How often do you host guests or festivals, and how many people come?', hint: 'Think Diwali, birthdays and relatives staying over.' },
+      ],
+    },
+    {
+      key: 'feel', title: 'How it should feel',
+      questions: [
+        { key: 'feel', essential: true, label: 'When you walk in after a long day, how should the home make you feel?', hint: 'Their own words. Feelings first, objects later.' },
+        { key: 'memory', label: 'Is there a home, place or memory you want this one to echo?', hint: "A grandparent's house, a trip, a festival." },
+        { key: 'worry', essential: true, label: 'What worries you most about this project?', hint: 'Cost, delays, clutter, or taste clashing across the family.' },
+      ],
+    },
+    {
+      key: 'space', title: 'The space',
+      questions: [
+        { key: 'rooms', essential: true, label: 'Which rooms are in scope?', hint: 'List each room and who uses it.' },
+        { key: 'property', label: 'What is the property, how big is it, and what stage is it at?', hint: 'For example a 3BHK flat of 1,450 sq ft, possession next month.' },
+        { key: 'keep', label: 'Which furniture, art or heirlooms must stay?', hint: 'Anything with sentimental value.' },
+        { key: 'vastu', label: 'Are there Vastu or religious requirements, such as a pooja space?', hint: 'Ask early. These change the layout.' },
+      ],
+    },
+    {
+      key: 'taste', title: 'Taste',
+      questions: [
+        { key: 'colors', essential: true, label: 'Which colors do you love, and which do you want to avoid?', hint: 'Ask about colors in clothes, saris and festivals too.' },
+        { key: 'materials', label: 'Which fabrics, woods, stones or finishes are you drawn to or dislike?', hint: 'Silk, cotton, teak, marble, brass.' },
+        { key: 'references', label: 'Which homes, photos or moodboards do you love, and what do you like in them?', hint: 'The reason matters more than the picture.' },
+      ],
+    },
+    {
+      key: 'practical', title: 'Budget, dates and decisions',
+      questions: [
+        { key: 'budget', essential: true, label: 'What is the budget, and what does it cover?', hint: 'Design only, or furniture, fabric and fittings too.' },
+        { key: 'occasion', essential: true, label: 'Is there a date that matters, such as a housewarming, wedding or festival?', hint: 'This often decides the delivery date.' },
+        { key: 'deciders', essential: true, label: 'Who decides, and who has to approve before we move ahead?', hint: 'Often more than one person.' },
+      ],
+    },
+  ];
+
+  const BRIEF_QUESTIONS = [];
+  BRIEF_GROUPS.forEach((g) => g.questions.forEach((q) => BRIEF_QUESTIONS.push(Object.assign({ group: g.title }, q))));
+
+  function answerText(project, key) {
+    const a = project && project.brief && project.brief.answers;
+    return a && typeof a[key] === 'string' ? a[key].trim() : '';
+  }
+  function isAnswered(project, key) {
+    return answerText(project, key).length >= 6;
+  }
+
+  function briefState(project) {
+    const essentials = BRIEF_QUESTIONS.filter((q) => q.essential);
+    const missing = essentials.filter((q) => !isAnswered(project, q.key));
+    return {
+      essentialsTotal: essentials.length,
+      essentialsDone: essentials.length - missing.length,
+      missing: missing,
+      answered: BRIEF_QUESTIONS.filter((q) => isAnswered(project, q.key)).length,
+      total: BRIEF_QUESTIONS.length,
+      complete: missing.length === 0,
+    };
+  }
+
+  function nextQuestions(project, n) {
+    const open = BRIEF_QUESTIONS.filter((q) => !isAnswered(project, q.key));
+    open.sort((a, b) => (b.essential ? 1 : 0) - (a.essential ? 1 : 0));
+    return open.slice(0, n);
+  }
+
+  // ---------- Dates (ISO strings, local calendar days) ----------
+
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  function pad(n) {
+    return String(n).padStart(2, '0');
+  }
+  function todayISO(d) {
+    d = d || new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function parseISO(s) {
+    const p = String(s).split('-').map(Number);
+    return new Date(p[0], p[1] - 1, p[2], 12, 0, 0);
+  }
+  function isISO(s) {
+    return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && todayISO(parseISO(s)) === s;
+  }
+  function addDays(iso, n) {
+    const d = parseISO(iso);
+    d.setDate(d.getDate() + n);
+    return todayISO(d);
+  }
+  function daysBetween(a, b) {
+    return Math.round((parseISO(b) - parseISO(a)) / 86400000);
+  }
+  function fmt(iso) {
+    const d = parseISO(iso);
+    return d.getDate() + ' ' + MONTHS[d.getMonth()];
+  }
+  function fmtDay(iso) {
+    return DAYS[parseISO(iso).getDay()] + ', ' + fmt(iso);
+  }
+  function relDays(n) {
+    if (n === 0) return 'today';
+    if (n === 1) return 'tomorrow';
+    if (n === -1) return 'yesterday';
+    return n > 0 ? 'in ' + n + ' days' : Math.abs(n) + ' days ago';
+  }
+  function plural(n, one, many) {
+    return n + ' ' + (n === 1 ? one : many);
+  }
+
+  // ---------- Planning dates ----------
+
+  function orderKeys(keys) {
+    return DELIVERABLES.filter((d) => keys.indexOf(d.key) !== -1).map((d) => d.key);
+  }
+
+  function proposeDates(start, end, keys) {
+    const total = daysBetween(start, end);
+    if (!(total >= 1)) return null;
+    const ks = keys && keys.length ? keys : DELIVERABLES.map((d) => d.key);
+    const sum = ks.reduce((n, k) => n + stageDef(k).weight, 0);
+    let cum = 0;
+    let prev = start;
+    return ks.map((k, i) => {
+      cum += stageDef(k).weight;
+      let d = i === ks.length - 1 ? end : addDays(start, Math.round((total * cum) / sum));
+      if (daysBetween(prev, d) < 0) d = prev;
+      prev = d;
+      return d;
+    });
+  }
+
+  function validateDates(project) {
+    const problems = [];
+    let prev = project.start;
+    project.stages.forEach((st) => {
+      if (!isISO(st.deadline)) problems.push('Pick a date for ' + stageDef(st.key).name + '.');
+      else if (daysBetween(prev, st.deadline) < 0) problems.push(stageDef(st.key).name + ' falls before the deliverable ahead of it.');
+      if (isISO(st.deadline)) prev = st.deadline;
+    });
+    return problems;
+  }
+
+  function buildStages(keys, start, end) {
+    const chosen = orderKeys(keys);
+    const dates = proposeDates(start, end, chosen);
+    if (!dates) return null;
+    return chosen.map((k, i) => ({ key: k, deadline: dates[i], doneAt: null, returned: null, attempts: 0 }));
+  }
+
+  function newProject(opts) {
+    const stages = buildStages(opts.deliverables && opts.deliverables.length ? opts.deliverables : CORE_DELIVERABLES, opts.start, opts.end);
+    return {
+      name: opts.name,
+      clientId: opts.clientId,
+      start: opts.start,
+      end: opts.end,
+      locked: false,
+      lockedAt: null,
+      status: 'active',
+      mood: 75,
+      created: opts.nowISO,
+      brief: { answers: {}, demands: {} },
+      stages: stages,
+      log: [{ t: opts.nowISO, type: 'created', stageKey: null, text: 'Project created', delta: 0, reaction: '' }],
+      portfolio: { checks: {}, ready: false, readyAt: null },
+    };
+  }
+
+  function setDeliverables(project, keys) {
+    if (project.locked) return { error: 'The deliverables are locked together with the dates.' };
+    const chosen = orderKeys(keys);
+    if (!chosen.length) return { error: 'Choose at least one deliverable.' };
+    const stages = buildStages(chosen, project.start, project.end);
+    if (!stages) return { error: 'The delivery date has to be after the start date.' };
+    return { project: Object.assign({}, project, { stages: stages }) };
+  }
+
+  // ---------- State of stages and projects ----------
+
+  function currentIndex(project) {
+    return project.stages.findIndex((s) => !s.doneAt);
+  }
+
+  function stageTasks(project, stageKey, tasks) {
+    return tasks.filter((t) => t.projectId === project.id && t.stageKey === stageKey);
+  }
+
+  function taskDue(task, project) {
+    if (task.due) return task.due;
+    const st = project && project.stages.find((s) => s.key === task.stageKey);
+    return st ? st.deadline : null;
+  }
+
+  function stageState(project, idx, tasks, today) {
+    const st = project.stages[idx];
+    const list = stageTasks(project, st.key, tasks);
+    const done = list.filter((t) => t.done).length;
+    const progress = { done: done, total: list.length };
+    if (st.doneAt) {
+      return { state: 'done', daysLeft: null, progress: progress, lateDays: Math.max(0, daysBetween(st.deadline, st.doneAt)) };
+    }
+    const daysLeft = daysBetween(today, st.deadline);
+    if (!project.locked) return { state: 'planning', daysLeft: daysLeft, progress: progress, lateDays: 0 };
+    if (daysLeft < 0) return { state: 'overdue', daysLeft: daysLeft, progress: progress, lateDays: -daysLeft };
+    if (idx === currentIndex(project)) {
+      const ratio = progress.total ? progress.done / progress.total : 0;
+      if (daysLeft === 0) return { state: 'due-today', daysLeft: 0, progress: progress, lateDays: 0 };
+      if (daysLeft <= 3 && ratio < 0.5) return { state: 'at-risk', daysLeft: daysLeft, progress: progress, lateDays: 0 };
+      return { state: 'on-track', daysLeft: daysLeft, progress: progress, lateDays: 0 };
+    }
+    return { state: 'upcoming', daysLeft: daysLeft, progress: progress, lateDays: 0 };
+  }
+
+  const RANK = { overdue: 5, 'at-risk': 4, 'due-today': 3, 'on-track': 2, upcoming: 1, planning: 0, done: 0 };
+
+  function projectSummary(project, tasks, today) {
+    const states = project.stages.map((_, i) => stageState(project, i, tasks, today));
+    const cur = currentIndex(project);
+    const doneCount = project.stages.filter((s) => s.doneAt).length;
+    let status;
+    if (cur === -1) status = 'delivered';
+    else if (!project.locked) status = 'planning';
+    else status = states.reduce((best, s) => (RANK[s.state] > RANK[best] ? s.state : best), 'on-track');
+    return {
+      states: states,
+      currentIdx: cur,
+      doneCount: doneCount,
+      status: status,
+      nextDeadline: cur === -1 ? null : project.stages[cur].deadline,
+    };
+  }
+
+  // ---------- Rescue plan ----------
+
+  function rescueOptions(item, openTasks) {
+    const options = [];
+    if (!openTasks.length) {
+      options.push({ kind: 'tasks', title: 'Make the work visible', text: 'Break this deliverable into 3 to 5 tasks, starting with the one that unblocks the rest.' });
+    } else {
+      options.push({ kind: 'tasks', title: 'Close one task now', text: 'Finish "' + openTasks[0].title + '" first. One closed task today changes the picture.' });
+    }
+    options.push({ kind: 'scope', title: 'Trim the scope', text: 'Offer fewer options or fewer rooms in this round, and tell the client what moves to the next one.' });
+    options.push({ kind: 'date', title: 'Ask for a new date', text: 'If neither works, move the date. It needs a reason, it is logged, and the client will notice.' });
+    return options;
+  }
+
+  // ---------- Analysis for the Today screen ----------
+
+  function analyze(projects, tasks, clientsById, today) {
+    const attention = [];
+    const upcoming = [];
+    projects.forEach((p) => {
+      const sum = projectSummary(p, tasks, today);
+      if (sum.status === 'delivered' || !p.locked) return;
+      const client = clientsById[p.clientId];
+      p.stages.forEach((st, i) => {
+        if (st.doneAt) return;
+        const s = sum.states[i];
+        if (s.state === 'overdue' || s.state === 'at-risk' || s.state === 'due-today') {
+          const open = stageTasks(p, st.key, tasks).filter((t) => !t.done);
+          const item = {
+            projectId: p.id,
+            projectName: p.name,
+            clientName: client ? client.name : '',
+            stageKey: st.key,
+            stageName: stageDef(st.key).name,
+            deadline: st.deadline,
+            state: s.state,
+            daysLeft: s.daysLeft,
+            progress: s.progress,
+            canDeliver: i === sum.currentIdx,
+          };
+          item.rescue = s.state === 'due-today' ? [] : rescueOptions(item, open);
+          attention.push(item);
+        }
+        if (s.daysLeft !== null && s.daysLeft >= 0 && s.daysLeft <= 14) {
+          upcoming.push({ projectId: p.id, projectName: p.name, stageKey: st.key, stageName: stageDef(st.key).name, deadline: st.deadline, daysLeft: s.daysLeft, state: s.state });
+        }
+      });
+    });
+    attention.sort((a, b) => RANK[b.state] - RANK[a.state] || a.daysLeft - b.daysLeft);
+    upcoming.sort((a, b) => a.daysLeft - b.daysLeft);
+    return { attention: attention, upcoming: upcoming };
+  }
+
+  // Projects that cannot start yet: the brief is thin, or the dates are not locked.
+  function briefGaps(projects, clientsById) {
+    const out = [];
+    projects.forEach((p) => {
+      if (p.locked || currentIndex(p) === -1) return;
+      const bs = briefState(p);
+      const c = clientsById[p.clientId];
+      const base = { projectId: p.id, projectName: p.name, clientName: c ? c.name : '', essentialsDone: bs.essentialsDone, essentialsTotal: bs.essentialsTotal };
+      out.push(bs.complete ? Object.assign(base, { kind: 'lock', next: null }) : Object.assign(base, { kind: 'brief', next: bs.missing[0] }));
+    });
+    out.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'brief' ? -1 : 1));
+    return out;
+  }
+
+  function greeting(hour) {
+    if (hour >= 5 && hour < 12) return 'Good morning';
+    if (hour >= 12 && hour < 17) return 'Good afternoon';
+    if (hour >= 17 && hour < 22) return 'Good evening';
+    return 'It is late';
+  }
+
+  function onTimeStreak(projects) {
+    const events = [];
+    projects.forEach((p) => (p.log || []).forEach((e) => e.type === 'delivered' && events.push(e)));
+    events.sort((a, b) => (a.t < b.t ? 1 : a.t > b.t ? -1 : 0));
+    let n = 0;
+    for (const e of events) {
+      if (e.late) break;
+      n += 1;
+    }
+    return n;
+  }
+
+  function buildBrief(info) {
+    // info: { projectCount, activeCount, attention, upcoming, gaps, hour, streak }
+    const hello = greeting(info.hour);
+    const top = info.attention[0] || null;
+    const gap = (info.gaps || [])[0] || null;
+    const out = { greeting: hello, headline: '', body: '', focus: null, gap: null };
+
+    if (!info.projectCount) {
+      out.headline = 'Set up your first project.';
+      out.body = 'Add a client, create the project, then take a full brief. Once the brief is complete, you agree the dates together and lock them.';
+      return out;
+    }
+    if (!info.activeCount) {
+      out.headline = 'Everything is delivered.';
+      out.body = 'Go through the portfolio checks on each finished project, then start something new.';
+      return out;
+    }
+    if (top && top.state === 'overdue') {
+      const n = info.attention.filter((a) => a.state === 'overdue').length;
+      out.headline = n === 1 ? 'One date has slipped.' : n + ' dates have slipped.';
+      out.body = top.stageName + ' for ' + top.projectName + ' was due ' + fmt(top.deadline) + '. Start there. A late deliverable can be recovered, and I have set out ways through below.';
+      out.focus = top;
+    } else if (top && top.state === 'at-risk') {
+      out.headline = 'A date is getting tight.';
+      out.body = top.stageName + ' for ' + top.projectName + ' is due ' + relDays(top.daysLeft) + ' and under half done. Let us protect it.';
+      out.focus = top;
+    } else if (top && top.state === 'due-today') {
+      out.headline = 'Delivery day.';
+      out.body = top.stageName + ' for ' + top.projectName + ' is due today. Run it through the checks and send it.';
+      out.focus = top;
+    } else if (gap && gap.kind === 'brief') {
+      out.headline = 'Get the full brief first.';
+      out.body = gap.projectName + ' has ' + gap.essentialsDone + ' of ' + gap.essentialsTotal + ' essential answers. Ask the client next: "' + gap.next.label + '"';
+      out.gap = gap;
+    } else if (gap) {
+      out.headline = 'Time to lock the dates.';
+      out.body = 'The brief for ' + gap.projectName + ' is complete. Agree the dates with the client and lock them, so I can hold you to every one.';
+      out.gap = gap;
+    } else {
+      const next = info.upcoming[0];
+      out.headline = 'You are on track.';
+      out.body = next ? 'Next date: ' + next.stageName + ' for ' + next.projectName + ' on ' + fmt(next.deadline) + ', ' + relDays(next.daysLeft) + '.' : 'No dates fall in the next two weeks.';
+    }
+    if (info.streak >= 2) out.body += ' That is ' + info.streak + ' on-time deliveries in a row.';
+    if (hello === 'It is late') out.body += ' Plan the next step, then rest.';
+    return out;
+  }
+
+  // ---------- Client mood and reactions ----------
+
+  function clamp(n, lo, hi) {
+    return Math.max(lo, Math.min(hi, n));
+  }
+
+  function moodInfo(score) {
+    if (score >= 85) return { label: 'Delighted', tone: 'good' };
+    if (score >= 65) return { label: 'Happy', tone: 'good' };
+    if (score >= 45) return { label: 'Uneasy', tone: 'warn' };
+    return { label: 'Worried', tone: 'bad' };
+  }
+
+  function reaction(kind, ctx) {
+    const n = ctx.clientName || 'The client';
+    const stage = ctx.stageName ? ctx.stageName.toLowerCase() : 'work';
+    switch (kind) {
+      case 'locked':
+        return n + ': "Thank you for agreeing the dates with us. We will plan around them."';
+      case 'on-time':
+        return n + ': "The ' + stage + ' came on the day we agreed. I feel looked after."';
+      case 'late':
+        return n + ': "We were expecting the ' + stage + ' by ' + fmt(ctx.deadline) + '.' + (ctx.worry ? ' My worry has not gone away: ' + ctx.worry + '.' : ' Please keep us posted.') + '"';
+      case 'sent-back':
+        return n + ': "I heard the ' + stage + ' needed another pass. I would rather it be right than rushed."';
+      case 'date-change':
+        return n + ': "The ' + stage + ' moved to ' + fmt(ctx.newDate) + '. I read your note: ' + ctx.reason + '. Please keep to this one."';
+      default:
+        return '';
+    }
+  }
+
+  function applyEvent(project, ev) {
+    const log = (project.log || []).concat([ev]);
+    return Object.assign({}, project, {
+      log: log.length > 120 ? log.slice(log.length - 120) : log,
+      mood: clamp((typeof project.mood === 'number' ? project.mood : 75) + (ev.delta || 0), 0, 100),
+    });
+  }
+
+  // ---------- Actions that change a project ----------
+
+  function lockProject(project, ctx, nowISO) {
+    if (project.locked) return { error: 'These dates are already locked.' };
+    const bs = briefState(project);
+    if (!bs.complete) return { error: 'Finish the brief first. ' + plural(bs.missing.length, 'essential question is', 'essential questions are') + ' still open.' };
+    const problems = validateDates(project);
+    if (problems.length) return { error: problems[0] };
+    const next = applyEvent(Object.assign({}, project, { locked: true, lockedAt: nowISO }), {
+      t: nowISO,
+      type: 'locked',
+      stageKey: null,
+      text: 'Brief complete. Dates and deliverables locked with the client',
+      delta: 0,
+      reaction: reaction('locked', ctx),
+    });
+    return { project: next };
+  }
+
+  function changeDate(project, stageKey, newISO, reason, ctx, nowISO) {
+    const idx = project.stages.findIndex((s) => s.key === stageKey);
+    if (idx === -1) return { error: 'That deliverable does not exist.' };
+    const st = project.stages[idx];
+    if (st.doneAt) return { error: 'A delivered deliverable cannot move.' };
+    if (!isISO(newISO)) return { error: 'Pick a valid date.' };
+    if (newISO === st.deadline) return { error: 'That is already the date.' };
+    const lower = idx > 0 ? project.stages[idx - 1].deadline : project.start;
+    const upper = idx < project.stages.length - 1 ? project.stages[idx + 1].deadline : null;
+    if (daysBetween(lower, newISO) < 0) return { error: 'Pick ' + fmt(lower) + ' or later. It cannot fall before the deliverable ahead.' };
+    if (upper && daysBetween(newISO, upper) < 0) return { error: 'Pick ' + fmt(upper) + ' or earlier, or move the later deliverables first.' };
+    const stages = project.stages.map((s, i) => (i === idx ? Object.assign({}, s, { deadline: newISO }) : s));
+    let next = Object.assign({}, project, { stages: stages });
+    if (idx === project.stages.length - 1) next.end = newISO;
+    if (!project.locked) return { project: next };
+    const why = (reason || '').trim();
+    if (why.length < 8) return { error: 'Give a reason of a few words. It goes in the log.' };
+    const later = daysBetween(st.deadline, newISO) > 0;
+    const name = stageDef(stageKey).name;
+    next = applyEvent(next, {
+      t: nowISO,
+      type: 'date-change',
+      stageKey: stageKey,
+      text: name + ' moved from ' + fmt(st.deadline) + ' to ' + fmt(newISO) + '. Reason: ' + why,
+      delta: later ? -4 : 0,
+      reaction: later ? reaction('date-change', { clientName: ctx.clientName, stageName: name, newDate: newISO, reason: why }) : '',
+    });
+    return { project: next };
+  }
+
+  function reviewStage(stageKey, checkedKeys, project) {
+    const set = new Set(checkedKeys || []);
+    const missing = checksFor(stageKey, project).filter((c) => !set.has(c.key)).map((c) => c.label);
+    return { passed: missing.length === 0, missing: missing };
+  }
+
+  function deliverStage(project, stageKey, checkedKeys, ctx, today, nowISO) {
+    if (!project.locked) return { error: 'Lock the dates before delivering anything.' };
+    const idx = project.stages.findIndex((s) => s.key === stageKey);
+    if (idx === -1) return { error: 'That deliverable does not exist.' };
+    const cur = currentIndex(project);
+    if (idx < cur) return { error: 'This deliverable is already delivered.' };
+    if (idx > cur) return { error: 'Finish ' + stageDef(project.stages[cur].key).name + ' first.' };
+    const st = project.stages[idx];
+    const name = stageDef(stageKey).name;
+    const review = reviewStage(stageKey, checkedKeys, project);
+    if (!review.passed) {
+      const stages = project.stages.map((s, i) => (i === idx ? Object.assign({}, s, { returned: review.missing, attempts: (s.attempts || 0) + 1 }) : s));
+      const next = applyEvent(Object.assign({}, project, { stages: stages }), {
+        t: nowISO,
+        type: 'sent-back',
+        stageKey: stageKey,
+        text: name + ' sent back: ' + review.missing.length + ' check' + (review.missing.length === 1 ? '' : 's') + ' not met',
+        delta: -2,
+        reaction: reaction('sent-back', { clientName: ctx.clientName, stageName: name }),
+      });
+      return { project: next, passed: false, missing: review.missing };
+    }
+    const lateDays = Math.max(0, daysBetween(st.deadline, today));
+    const late = lateDays > 0;
+    const firstPass = !(st.attempts > 0);
+    const stages = project.stages.map((s, i) => (i === idx ? Object.assign({}, s, { doneAt: today, returned: null }) : s));
+    const isLast = idx === project.stages.length - 1;
+    let next = Object.assign({}, project, { stages: stages });
+    if (isLast) next = Object.assign(next, { status: 'delivered', deliveredAt: today });
+    next = applyEvent(next, {
+      t: nowISO,
+      type: 'delivered',
+      stageKey: stageKey,
+      text: name + (late ? ' delivered ' + lateDays + (lateDays === 1 ? ' day late' : ' days late') : ' delivered on time') + (firstPass ? ', first pass' : ''),
+      delta: late ? -(8 + 2 * Math.min(lateDays, 6)) : 5,
+      late: late,
+      reaction: reaction(late ? 'late' : 'on-time', { clientName: ctx.clientName, stageName: name, deadline: st.deadline, worry: ctx.worry }),
+    });
+    return { project: next, passed: true, late: late, lateDays: lateDays, firstPass: firstPass };
+  }
+
+  function setPortfolioCheck(project, key, value, nowISO) {
+    const checks = Object.assign({}, project.portfolio && project.portfolio.checks, { [key]: !!value });
+    const ready = PORTFOLIO_CHECKS.every((c) => checks[c.key]);
+    const was = project.portfolio && project.portfolio.ready;
+    return {
+      checks: checks,
+      ready: ready,
+      readyAt: ready ? (was && project.portfolio.readyAt) || nowISO : null,
+    };
+  }
+
+  // ---------- Simulated client interview ----------
+
+  function interviewPrompt(client, project, history, question) {
+    const c = client || {};
+    const known = BRIEF_QUESTIONS.filter((q) => isAnswered(project, q.key)).map((q) => '- ' + q.label + ' ' + answerText(project, q.key));
+    const asked = (project.stages || []).map((s) => {
+      const d = project.brief && project.brief.demands ? String(project.brief.demands[s.key] || '').trim() : '';
+      return '- ' + stageDef(s.key).name + (d ? ': ' + d : '');
+    });
+    const talk = history.slice(-8).map((h) => 'Designer: ' + h.q + '\nYou: ' + h.a);
+    return [
+      'You are role-playing a client of an interior design studio in India. You are the client, speaking to the designer. Stay in character for the whole answer.',
+      '',
+      'Who you are:',
+      'Name: ' + (c.name || 'the client'),
+      c.type ? 'Household: ' + c.type : '',
+      c.budget ? 'Budget: ' + c.budget : '',
+      c.taste ? 'Taste: ' + c.taste : '',
+      c.need ? 'What you need, emotionally: ' + c.need : '',
+      c.worry ? 'Your main worry: ' + c.worry : '',
+      '',
+      'Deliverables you have asked the studio for, with what you expect:',
+      asked.length ? asked.join('\n') : '- none chosen yet',
+      '',
+      'What the designer already knows from earlier answers:',
+      known.length ? known.join('\n') : '- nothing yet',
+      '',
+      talk.length ? 'The conversation so far:\n' + talk.join('\n') : '',
+      '',
+      'How to answer:',
+      '- Answer only the question asked, in two to four sentences, in the first person, in natural spoken English. A Hindi or regional word is fine where it fits, but keep it easy to read.',
+      '- Give real, concrete details: names and ages of family members, specific colors, rooms, routines, festivals. Add the feeling behind the detail.',
+      '- Do not volunteer topics the designer has not asked about. If the question is vague, like "what do you want?", answer the way a real client would: emotionally and loosely, so the designer learns to ask a better question.',
+      '- Stay consistent with who you are and with earlier answers. Never contradict the stated budget.',
+      '- Never mention being an AI or a role-play. Reply with the answer only, no quotation marks and no labels.',
+      '',
+      'The designer asks: ' + question,
+    ].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n');
+  }
+
+  // ---------- Team and scorecard ----------
+
+  function memberStats(memberId, tasks, projects) {
+    const byId = {};
+    projects.forEach((p) => (byId[p.id] = p));
+    const mine = tasks.filter((t) => t.assigneeId === memberId);
+    const open = mine.filter((t) => !t.done);
+    const done = mine.filter((t) => t.done);
+    let onTime = 0;
+    done.forEach((t) => {
+      const due = taskDue(t, byId[t.projectId]);
+      if (!due || !t.doneAt || daysBetween(due, t.doneAt) <= 0) onTime += 1;
+    });
+    return { open: open.length, done: done.length, onTimeRate: done.length ? Math.round((onTime / done.length) * 100) : null };
+  }
+
+  function scorecard(projects) {
+    let delivered = 0;
+    let onTime = 0;
+    let firstPass = 0;
+    projects.forEach((p) =>
+      p.stages.forEach((s) => {
+        if (!s.doneAt) return;
+        delivered += 1;
+        if (daysBetween(s.deadline, s.doneAt) <= 0) onTime += 1;
+        if (!(s.attempts > 0)) firstPass += 1;
+      })
+    );
+    return {
+      delivered: delivered,
+      onTimeRate: delivered ? Math.round((onTime / delivered) * 100) : null,
+      firstPassRate: delivered ? Math.round((firstPass / delivered) * 100) : null,
+      portfolioReady: projects.filter((p) => p.portfolio && p.portfolio.ready).length,
+    };
+  }
+
+  return {
+    DELIVERABLES, CORE_DELIVERABLES, PORTFOLIO_CHECKS, UNIVERSAL_CHECKS, STAGE_CHECKS, BRIEF_GROUPS, BRIEF_QUESTIONS,
+    stageDef, checksFor, clip,
+    answerText, isAnswered, briefState, nextQuestions,
+    todayISO, parseISO, isISO, addDays, daysBetween, fmt, fmtDay, relDays,
+    proposeDates, validateDates, newProject, setDeliverables, orderKeys,
+    currentIndex, stageTasks, taskDue, stageState, projectSummary,
+    rescueOptions, analyze, briefGaps, greeting, onTimeStreak, buildBrief,
+    moodInfo, reaction, applyEvent,
+    lockProject, changeDate, reviewStage, deliverStage, setPortfolioCheck,
+    interviewPrompt, memberStats, scorecard, plural,
+  };
+})();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = StudioLogic;
+
+(function () {
+  'use strict';
+  const L = StudioLogic;
+
+  // ---------- Small helpers ----------
+  const $ = (s, r) => (r || document).querySelector(s);
+  const esc = (v) =>
+    String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const byId = (arr) => {
+    const m = {};
+    arr.forEach((x) => (m[x.id] = x));
+    return m;
+  };
+  const newId = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const clean = (o) => JSON.parse(JSON.stringify(o));
+  const nowISO = () => new Date().toISOString();
+
+  const prefs = {
+    get(k, d) {
+      try {
+        const v = localStorage.getItem('sm:' + k);
+        return v === null ? d : v;
+      } catch (e) {
+        return d;
+      }
+    },
+    set(k, v) {
+      try {
+        localStorage.setItem('sm:' + k, v);
+      } catch (e) {}
+    },
+  };
+
+  let toastTimer;
+  function toast(msg, kind) {
+    const el = $('#toast');
+    el.textContent = msg;
+    el.className = 'toast' + (kind === 'error' ? ' error' : '');
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => (el.hidden = true), 4600);
+  }
+
+  function errMsg(e) {
+    const code = e && e.code;
+    if (code === 'quota_exceeded') return 'The studio database is full. Remove old items to add new ones.';
+    if (code === 'invalid_argument' || code === 'not_granted') return 'That change was refused. If you can only view this studio, ask the owner for edit access.';
+    if (code === 'resource_exhausted') return 'Too many changes at once. Wait a moment and try again.';
+    return (e && e.message) || 'Something went wrong. Try again.';
+  }
+
+  // ---------- Storage: shared database when available, this device otherwise ----------
+  function mergeDeep(a, b) {
+    const out = Object.assign({}, a);
+    Object.keys(b).forEach((k) => {
+      const v = b[k];
+      const plain = (x) => x && typeof x === 'object' && !Array.isArray(x);
+      out[k] = plain(v) && plain(a && a[k]) ? mergeDeep(a[k], v) : v;
+    });
+    return out;
+  }
+
+  function makeLocalStore() {
+    const KEY = 'studio-manager-v1';
+    let data = {};
+    try {
+      data = JSON.parse(localStorage.getItem(KEY) || '{}');
+    } catch (e) {
+      data = {};
+    }
+    const subs = {};
+    const persist = () => {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(data));
+      } catch (e) {}
+    };
+    const rows = (c) => Object.entries(data[c] || {}).map(([id, v]) => Object.assign({ id: id }, v));
+    const emit = (c) => (subs[c] || []).forEach((f) => f(rows(c)));
+    return {
+      shared: false,
+      subscribe(c, f) {
+        (subs[c] = subs[c] || []).push(f);
+        f(rows(c));
+        return () => {};
+      },
+      async set(c, id, v) {
+        (data[c] = data[c] || {})[id] = clean(v);
+        persist();
+        emit(c);
+      },
+      async update(c, id, patch) {
+        const cur = (data[c] || {})[id];
+        if (!cur) throw new Error('That item no longer exists.');
+        data[c][id] = mergeDeep(cur, clean(patch));
+        persist();
+        emit(c);
+      },
+      async remove(c, id) {
+        if (data[c]) delete data[c][id];
+        persist();
+        emit(c);
+      },
+    };
+  }
+
+  function makeDbStore(db) {
+    const chain = {};
+    const enqueue = (key, fn) => {
+      const p = (chain[key] || Promise.resolve()).catch(() => {}).then(fn);
+      chain[key] = p;
+      return p;
+    };
+    return {
+      shared: true,
+      subscribe(c, f, onErr) {
+        return db.collection(c).onSnapshot((snap) => f(snap.docs.map((d) => Object.assign({ id: d.id }, d.data()))), onErr);
+      },
+      set: (c, id, v) => enqueue(c + '/' + id, () => db.doc(c + '/' + id).set(clean(v))),
+      update: (c, id, patch) => enqueue(c + '/' + id, () => db.doc(c + '/' + id).update(clean(patch))),
+      remove: (c, id) => enqueue(c + '/' + id, () => db.doc(c + '/' + id).delete()),
+    };
+  }
+
+  // ---------- State ----------
+  const COLLECTIONS = ['clients', 'projects', 'team', 'tasks', 'settings'];
+  const state = { ready: false, failed: '', shared: false, canWrite: null, studio: {}, clients: [], projects: [], team: [], tasks: [] };
+  const loaded = new Set();
+  const VIEWS = ['today', 'projects', 'team', 'clients', 'studio'];
+  const ui = { view: prefs.get('view', 'today'), projectId: null, open: {}, armed: null, viewAs: prefs.get('viewAs', '') };
+  if (VIEWS.indexOf(ui.view) === -1) ui.view = 'today';
+  let store = null;
+  let sampleFn = null;
+  let armTimer;
+  let renderQueued = false;
+
+  function connect(s) {
+    store = s;
+    state.shared = s.shared;
+    COLLECTIONS.forEach((c) =>
+      s.subscribe(
+        c,
+        (rows) => {
+          if (c === 'settings') state.studio = rows.find((r) => r.id === 'studio') || {};
+          else state[c] = rows;
+          loaded.add(c);
+          if (loaded.size === COLLECTIONS.length) state.ready = true;
+          scheduleRender();
+        },
+        (e) => {
+          state.failed = (e && e.message) || 'The studio data could not be loaded.';
+          scheduleRender();
+        }
+      )
+    );
+  }
+
+  function scheduleRender() {
+    if (renderQueued) return;
+    renderQueued = true;
+    requestAnimationFrame(() => {
+      renderQueued = false;
+      render();
+    });
+  }
+
+  const clientCtx = (p) => {
+    const c = state.clients.find((x) => x.id === p.clientId);
+    return { clientName: c ? c.name : 'The client', worry: c && c.worry ? c.worry : '' };
+  };
+  function saveProject(p) {
+    const rest = Object.assign({}, p);
+    delete rest.id;
+    delete rest.brief; // the brief is saved field by field, so a stale copy never overwrites a teammate's answers
+    return store.update('projects', p.id, rest);
+  }
+
+  // ---------- Shared pieces of markup ----------
+  function statePill(st, daysLeft) {
+    const labels = {
+      overdue: 'Overdue ' + L.plural(-daysLeft, 'day', 'days'),
+      'at-risk': 'At risk, due ' + L.relDays(daysLeft),
+      'due-today': 'Due today',
+      'on-track': 'On track',
+      upcoming: 'Upcoming',
+      planning: 'Dates not locked',
+      done: 'Delivered',
+    };
+    const cls = st === 'upcoming' || st === 'planning' ? '' : st;
+    return '<span class="pill ' + cls + '">' + esc(labels[st] || st) + '</span>';
+  }
+
+  function projectPill(sum) {
+    if (sum.status === 'delivered') return statePill('done');
+    if (sum.status === 'planning') return statePill('planning');
+    const worst = sum.states.find((s) => s.state === sum.status);
+    return statePill(sum.status, worst ? worst.daysLeft : 0);
+  }
+
+  function segsHtml(p, sum) {
+    const cells = p.stages
+      .map((_, i) => {
+        const s = sum.states[i].state;
+        return '<span class="seg ' + (s === 'planning' || s === 'upcoming' ? '' : s) + '"></span>';
+      })
+      .join('');
+    return '<div class="segs" role="img" aria-label="' + sum.doneCount + ' of ' + p.stages.length + ' deliverables delivered">' + cells + '</div>';
+  }
+
+  function moodHtml(p, withQuote) {
+    const mood = typeof p.mood === 'number' ? p.mood : 75;
+    const mi = L.moodInfo(mood);
+    const last = (p.log || []).slice().reverse().find((e) => e.reaction);
+    return (
+      '<div class="mood"><div class="mood-top"><span>Client mood</span><span>' + esc(mi.label) + '</span></div>' +
+      '<div class="meter ' + (mi.tone === 'good' ? '' : mi.tone) + '"><span style="width:' + mood + '%"></span></div></div>' +
+      (withQuote && last ? '<p class="quote">' + esc(last.reaction) + '</p>' : '')
+    );
+  }
+
+  function memberOptions(sel) {
+    return (
+      '<option value="">Unassigned</option>' +
+      state.team.map((m) => '<option value="' + esc(m.id) + '"' + (m.id === sel ? ' selected' : '') + '>' + esc(m.name) + '</option>').join('')
+    );
+  }
+
+  function armButton(key, confirmAction, id, label) {
+    if (ui.armed === key) return '<button type="button" class="btn danger sm" data-action="' + confirmAction + '" data-id="' + esc(id) + '">Confirm remove</button>';
+    return '<button type="button" class="btn line sm" data-action="arm" data-key="' + esc(key) + '">' + esc(label || 'Remove') + '</button>';
+  }
+
+  function taskCount(pr) {
+    if (!pr.total) return 'No tasks yet';
+    return pr.done + ' of ' + pr.total + (pr.total === 1 ? ' task' : ' tasks') + ' done';
+  }
+
+  function exampleTag(x) {
+    return x && x.example ? '<span class="pill example">Example</span>' : '';
+  }
+
+  function taskRow(t, p, opts) {
+    opts = opts || {};
+    const mb = byId(state.team);
+    const who = t.assigneeId && mb[t.assigneeId] ? mb[t.assigneeId].name : 'Unassigned';
+    const due = L.taskDue(t, p);
+    const d = due ? L.daysBetween(L.todayISO(), due) : null;
+    const late = !t.done && d !== null && d < 0;
+    const when = t.done ? 'Done' : due ? L.fmt(due) + ', ' + L.relDays(d) : '';
+    const def = L.stageDef(t.stageKey);
+    const meta = opts.detail
+      ? ''
+      : '<div class="t-meta"><span>' + esc(p ? p.name : '') + '</span><span>' + esc(def ? def.name : '') + '</span><span>' + esc(who) + '</span></div>';
+    const right = opts.detail
+      ? '<div class="acts"><select class="sel-sm" data-change="assign-task" data-id="' + esc(t.id) + '" aria-label="Assignee">' + memberOptions(t.assigneeId) + '</select>' +
+        armButton('task:' + t.id, 'remove-task', t.id, 'Remove') + '</div>'
+      : '<span class="t-when' + (late ? ' late' : '') + '">' + esc(when) + '</span>';
+    return (
+      '<div class="task' + (t.done ? ' done' : '') + '"><input type="checkbox" data-change="toggle-task" data-id="' + esc(t.id) + '"' + (t.done ? ' checked' : '') +
+      ' aria-label="Done: ' + esc(t.title) + '"><div><div class="t-title">' + esc(t.title) + '</div>' + meta + '</div>' + right + '</div>'
+    );
+  }
+
+  // ---------- Views ----------
+  function renderToday() {
+    const today = L.todayISO();
+    const clients = byId(state.clients);
+    const active = state.projects.filter((p) => L.currentIndex(p) !== -1);
+    const an = L.analyze(state.projects, state.tasks, clients, today);
+    const gaps = L.briefGaps(state.projects, clients);
+    const brief = L.buildBrief({
+      projectCount: state.projects.length,
+      activeCount: active.length,
+      attention: an.attention,
+      upcoming: an.upcoming,
+      gaps: gaps,
+      hour: new Date().getHours(),
+      streak: L.onTimeStreak(state.projects),
+    });
+
+    let acts = '';
+    if (!state.projects.length) {
+      acts =
+        '<button type="button" class="btn on-hero" data-action="new-client">Add a client</button>' +
+        (state.clients.length ? '<button type="button" class="btn on-hero" data-action="new-project">Create a project</button>' : '');
+    } else if (brief.focus) {
+      acts = '<button type="button" class="btn on-hero" data-action="open-project" data-id="' + esc(brief.focus.projectId) + '">Open ' + esc(brief.focus.projectName) + '</button>';
+      if (brief.focus.canDeliver) acts += '<button type="button" class="btn on-hero" data-action="deliver-stage" data-id="' + esc(brief.focus.projectId) + '" data-stage="' + esc(brief.focus.stageKey) + '">Review and deliver</button>';
+    } else if (brief.gap) {
+      acts = '<button type="button" class="btn on-hero" data-action="open-project" data-id="' + esc(brief.gap.projectId) + '">' + (brief.gap.kind === 'brief' ? 'Open the brief' : 'Agree the dates') + '</button>';
+    } else if (!active.length) {
+      acts = '<button type="button" class="btn on-hero" data-action="new-project">New project</button>';
+    }
+
+    const hero =
+      '<section class="hero"><p class="greet">' + esc(brief.greeting) + '</p><h1>' + esc(brief.headline) + '</h1><p class="body">' + esc(brief.body) + '</p>' +
+      (acts ? '<div class="acts">' + acts + '</div>' : '') + '</section>';
+
+    let attention = '';
+    if (an.attention.length) {
+      attention =
+        '<section class="sec"><div class="sec-head"><h2>Needs attention</h2><span class="muted small">' + L.plural(an.attention.length, 'deliverable', 'deliverables') + '</span></div><div class="card rows">' +
+        an.attention
+          .map((a) => {
+            const rescue = a.rescue.length
+              ? '<div class="rescue">' +
+                a.rescue
+                  .map(
+                    (r) =>
+                      '<div class="rescue-item"><strong>' + esc(r.title) + '</strong><p>' + esc(r.text) + '</p>' +
+                      (r.kind === 'date' ? '<button type="button" class="btn quiet sm" data-action="change-date" data-id="' + esc(a.projectId) + '" data-stage="' + esc(a.stageKey) + '">Change date</button>' : '') +
+                      '</div>'
+                  )
+                  .join('') +
+                '</div>'
+              : '';
+            return (
+              '<div class="row attn"><div class="attn-top">' + statePill(a.state, a.daysLeft) + '<span class="attn-title">' + esc(a.stageName) + '</span><span class="muted">' + esc(a.projectName) + '</span></div>' +
+              '<div class="muted small">Locked date ' + esc(L.fmtDay(a.deadline)) + '. ' + taskCount(a.progress) + '.</div>' + rescue +
+              '<div class="acts"><button type="button" class="btn line sm" data-action="open-project" data-id="' + esc(a.projectId) + '">Open project</button>' +
+              (a.canDeliver ? '<button type="button" class="btn sm" data-action="deliver-stage" data-id="' + esc(a.projectId) + '" data-stage="' + esc(a.stageKey) + '">Review and deliver</button>' : '') +
+              '</div></div>'
+            );
+          })
+          .join('') +
+        '</div></section>';
+    }
+
+    const waiting = gaps.length
+      ? '<section class="sec"><div class="sec-head"><h2>Waiting on a brief or dates</h2><span class="muted small">' + L.plural(gaps.length, 'project', 'projects') + '</span></div><div class="card rows">' +
+        gaps
+          .map((g) => {
+            const isBrief = g.kind === 'brief';
+            const line = isBrief
+              ? g.essentialsDone + ' of ' + g.essentialsTotal + ' essential answers. Ask next: ' + g.next.label
+              : 'The brief is complete. Agree the dates with the client and lock them.';
+            return (
+              '<div class="row attn"><div class="attn-top"><span class="pill' + (isBrief ? '' : ' due-today') + '">' + (isBrief ? 'Brief open' : 'Ready to lock') + '</span><span class="attn-title">' + esc(g.projectName) +
+              '</span><span class="muted">' + esc(g.clientName) + '</span></div><div class="muted small">' + esc(line) + '</div>' +
+              '<div class="acts"><button type="button" class="btn line sm" data-action="open-project" data-id="' + esc(g.projectId) + '">' + (isBrief ? 'Open the brief' : 'Agree the dates') + '</button></div></div>'
+            );
+          })
+          .join('') +
+        '</div></section>'
+      : '';
+
+    // Tasks
+    const pb = byId(state.projects);
+    const rows = [];
+    state.tasks.forEach((t) => {
+      if (t.done) return;
+      const p = pb[t.projectId];
+      if (!p || L.currentIndex(p) === -1) return;
+      if (ui.viewAs && t.assigneeId && t.assigneeId !== ui.viewAs) return;
+      const due = L.taskDue(t, p);
+      if (!due) return;
+      const d = L.daysBetween(today, due);
+      if (d > 7) return;
+      rows.push({ t: t, p: p, d: d });
+    });
+    rows.sort((a, b) => a.d - b.d);
+    const picker = state.team.length
+      ? '<label class="small muted" style="display:flex;gap:8px;align-items:center">Showing <select class="sel-sm" data-change="view-as" aria-label="Whose tasks">' +
+        '<option value="">Everyone</option>' +
+        state.team.map((m) => '<option value="' + esc(m.id) + '"' + (m.id === ui.viewAs ? ' selected' : '') + '>' + esc(m.name) + '</option>').join('') +
+        '</select></label>'
+      : '';
+    const tasks =
+      '<section class="sec"><div class="sec-head"><h2>Tasks due in the next 7 days</h2>' + picker + '</div>' +
+      (rows.length
+        ? '<div class="card rows">' + rows.map((r) => '<div class="row">' + taskRow(r.t, r.p) + '</div>').join('') + '</div>'
+        : '<div class="empty"><h3>Nothing due this week</h3><p>' + (state.projects.length ? 'Add tasks to a deliverable so I can track them against its date.' : 'Tasks appear here once a project has deliverables with tasks.') + '</p></div>') +
+      '</section>';
+
+    const upcoming =
+      '<section class="sec"><h2>Locked dates in the next two weeks</h2>' +
+      (an.upcoming.length
+        ? '<div class="card rows">' +
+          an.upcoming
+            .map(
+              (u) =>
+                '<div class="row" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><strong>' + esc(u.stageName) + '</strong> <span class="muted">' + esc(u.projectName) +
+                '</span></div><span class="muted">' + esc(L.fmtDay(u.deadline)) + ', ' + esc(L.relDays(u.daysLeft)) + '</span></div>'
+            )
+            .join('') +
+          '</div>'
+        : '<p class="muted">No locked dates fall in the next two weeks.</p>') +
+      '</section>';
+
+    const sc = L.scorecard(state.projects);
+    const pct = (v) => (v === null ? 'None yet' : v + '%');
+    const score =
+      '<section class="sec"><h2>Studio scorecard</h2><div class="score">' +
+      '<div><div class="num">' + pct(sc.onTimeRate) + '</div><div class="lbl">Deliverables sent on time</div></div>' +
+      '<div><div class="num">' + pct(sc.firstPassRate) + '</div><div class="lbl">Passed the quality gate first time</div></div>' +
+      '<div><div class="num">' + sc.delivered + '</div><div class="lbl">Deliverables sent</div></div>' +
+      '<div><div class="num">' + sc.portfolioReady + '</div><div class="lbl">Portfolio-ready projects</div></div></div></section>';
+
+    return hero + attention + waiting + tasks + upcoming + score;
+  }
+
+  function briefFact(p) {
+    if (p.locked || L.currentIndex(p) === -1) return '';
+    const bs = L.briefState(p);
+    return bs.complete ? '' : '<span>Brief <b>' + bs.essentialsDone + ' of ' + bs.essentialsTotal + '</b></span>';
+  }
+
+  function renderProjects() {
+    const today = L.todayISO();
+    const clients = byId(state.clients);
+    const head =
+      '<div class="head-row"><h1 class="view-title">Projects</h1><button type="button" class="btn" data-action="new-project">New project</button></div>';
+    if (!state.projects.length) {
+      return (
+        head +
+        '<div class="empty"><h3>No projects yet</h3><p>' +
+        (state.clients.length
+          ? 'Create a project for one of your clients. Take the full brief, agree the dates, then lock them.'
+          : 'Add a client first. Every project belongs to a client with a need and an emotional goal.') +
+        '</p><button type="button" class="btn" data-action="' + (state.clients.length ? 'new-project' : 'new-client') + '">' + (state.clients.length ? 'Create a project' : 'Add a client') + '</button></div>'
+      );
+    }
+    const list = state.projects
+      .map((p) => ({ p: p, sum: L.projectSummary(p, state.tasks, today) }))
+      .sort((a, b) => (a.sum.status === 'delivered') - (b.sum.status === 'delivered') || (a.p.end < b.p.end ? -1 : 1));
+    return (
+      head +
+      '<div class="grid">' +
+      list
+        .map(({ p, sum }) => {
+          const c = clients[p.clientId];
+          return (
+            '<button type="button" class="proj" data-action="open-project" data-id="' + esc(p.id) + '"><div class="proj-top"><div><h3>' + esc(p.name) + '</h3><div class="muted small">' + esc(c ? c.name : 'Unknown client') + '</div></div>' + projectPill(sum) + '</div>' +
+            segsHtml(p, sum) +
+            '<div class="facts"><span>Delivery <b>' + esc(L.fmt(p.end)) + '</b></span><span>' + sum.doneCount + ' of ' + p.stages.length + (p.stages.length === 1 ? ' deliverable' : ' deliverables') + '</span>' + briefFact(p) + '</div>' +
+            moodHtml(p, false) + (p.example ? '<div>' + exampleTag(p) + '</div>' : '') + '</button>'
+          );
+        })
+        .join('') +
+      '</div>'
+    );
+  }
+
+  function isStageOpen(p, i, sum) {
+    const key = p.id + ':' + p.stages[i].key;
+    return key in ui.open ? ui.open[key] : i === sum.currentIdx;
+  }
+
+  function stageHtml(p, i, sum) {
+    const st = p.stages[i];
+    const def = L.stageDef(st.key);
+    const demand = p.brief && p.brief.demands && typeof p.brief.demands[st.key] === 'string' ? p.brief.demands[st.key].trim() : '';
+    const s = sum.states[i];
+    const isCur = i === sum.currentIdx;
+    const open = isStageOpen(p, i, sum);
+    const tasks = state.tasks.filter((t) => t.projectId === p.id && t.stageKey === st.key);
+    const node = s.state === 'done' ? 'done' : s.state === 'overdue' ? 'cur overdue' : isCur ? 'cur' : '';
+    const dateLine =
+      s.state === 'done'
+        ? 'Delivered ' + L.fmt(st.doneAt) + (s.lateDays ? ', ' + L.plural(s.lateDays, 'day', 'days') + ' late' : ', on time')
+        : 'Due ' + L.fmtDay(st.deadline) + (p.locked ? ', locked' : '');
+
+    let body = '';
+    if (open) {
+      const returned = st.returned && st.returned.length
+        ? '<div class="returned"><strong>Sent back. These checks were not met:</strong><ul>' + st.returned.map((r) => '<li>' + esc(r) + '</li>').join('') + '</ul></div>'
+        : '';
+      const list = tasks.length ? '<div class="rows">' + tasks.map((t) => '<div class="row">' + taskRow(t, p, { detail: true }) + '</div>').join('') + '</div>' : '<p class="muted small">No tasks yet. Add the first one below.</p>';
+      const form =
+        '<form class="inline-form" data-form="add-task" data-id="' + esc(p.id) + '" data-stage="' + esc(st.key) + '">' +
+        '<input type="text" id="nt-' + esc(st.key) + '" data-keep placeholder="Add a task to this deliverable" aria-label="New task" required maxlength="140">' +
+        '<select id="na-' + esc(st.key) + '" data-keep aria-label="Assign to">' + memberOptions('') + '</select>' +
+        '<button type="submit" class="btn quiet sm">Add task</button></form>';
+      let acts = '';
+      if (p.locked && s.state !== 'done') acts += '<button type="button" class="btn quiet sm" data-action="change-date" data-id="' + esc(p.id) + '" data-stage="' + esc(st.key) + '">Change date</button>';
+      if (p.locked && isCur) acts += '<button type="button" class="btn sm" data-action="deliver-stage" data-id="' + esc(p.id) + '" data-stage="' + esc(st.key) + '">Review and deliver</button>';
+      body = returned + '<div class="tasks-box">' + list + form + '</div>' + (acts ? '<div class="acts">' + acts + '</div>' : '');
+    }
+
+    return (
+      '<div class="stage"><div class="rail"><span class="node ' + node + '"></span></div><div class="s-body"><div class="s-head"><div><div class="s-name"><button type="button" data-action="toggle-stage" data-id="' + esc(p.id) + '" data-stage="' + esc(st.key) + '" aria-expanded="' + open + '">' +
+      esc(def.name) + '</button></div><div class="s-date">' + esc(dateLine) + '. ' + taskCount(s.progress) + '.</div>' + (demand ? '<div class="s-date">The client asked for: ' + esc(demand) + '</div>' : '') + '</div>' +
+      statePill(s.state, s.daysLeft) + '</div>' + body + '</div></div>'
+    );
+  }
+
+  function planHtml(p) {
+    const problems = L.validateDates(p);
+    const bs = L.briefState(p);
+    return (
+      '<section class="card sec"><div><h2>Agree the dates</h2><p class="muted">Talk through each deliverable with the client and set its date. When everyone agrees, lock them. After that every change needs a reason, is logged, and the client notices.</p></div>' +
+      '<div class="fgrid"><label class="f">Start date<input type="date" id="plan-start" data-keep value="' + esc(p.start) + '"></label>' +
+      '<label class="f">Delivery date<input type="date" id="plan-end" data-keep value="' + esc(p.end) + '"></label></div>' +
+      '<div class="acts"><button type="button" class="btn quiet sm" data-action="propose-dates">Suggest dates from these two</button></div>' +
+      '<div class="plan-dates">' +
+      p.stages.map((s) => '<label>' + esc(L.stageDef(s.key).name) + '<input type="date" id="sd-' + esc(s.key) + '" data-keep data-change="set-stage-date" data-stage="' + esc(s.key) + '" value="' + esc(s.deadline) + '"></label>').join('') +
+      '</div>' + (problems.length ? '<p class="problems">' + esc(problems[0]) + '</p>' : '') +
+      (bs.complete ? '' : '<p class="muted">Finish the brief before locking: ' + bs.essentialsDone + ' of ' + bs.essentialsTotal + ' essential answers are in.</p>') +
+      '<div class="acts"><button type="button" class="btn" data-action="lock-dates"' + (problems.length || !bs.complete ? ' disabled' : '') + '>Lock the dates</button></div></section>'
+    );
+  }
+
+  // ---------- Client brief ----------
+
+  function ensureBriefOpen(p) {
+    ui.briefInit = ui.briefInit || {};
+    if (ui.briefInit[p.id]) return;
+    ui.briefInit[p.id] = true;
+    const first = L.BRIEF_GROUPS.findIndex((g) => g.questions.some((q) => q.essential && !L.isAnswered(p, q.key)));
+    L.BRIEF_GROUPS.forEach((g, i) => {
+      const k = 'bg:' + p.id + ':' + g.key;
+      if (!(k in ui.open)) ui.open[k] = i === first;
+    });
+  }
+
+  function questionHtml(p, q) {
+    return (
+      '<label class="f">' + esc(q.label) + ' ' + (q.essential ? '<span class="tag">Essential</span>' : '<span class="muted">(optional)</span>') +
+      '<span class="hint">' + esc(q.hint) + '</span><textarea id="bq-' + q.key + '" data-keep data-change="brief-answer" data-key="' + q.key + '" maxlength="700">' + esc(L.answerText(p, q.key)) + '</textarea></label>'
+    );
+  }
+
+  function answerTargets(p) {
+    const chosen = p.stages.map((s) => s.key);
+    const demands = (p.brief && p.brief.demands) || {};
+    return (
+      '<option value="">Save to...</option>' +
+      '<optgroup label="Brief questions">' +
+      L.BRIEF_QUESTIONS.map((q) => '<option value="q:' + q.key + '">' + esc(L.clip(q.label, 56)) + (L.isAnswered(p, q.key) ? ' (answered)' : q.essential ? ' (essential)' : '') + '</option>').join('') +
+      '</optgroup><optgroup label="What they expect">' +
+      L.DELIVERABLES.filter((d) => chosen.indexOf(d.key) !== -1)
+        .map((d) => '<option value="d:' + d.key + '">' + esc(d.name) + (String(demands[d.key] || '').trim() ? ' (answered)' : '') + '</option>')
+        .join('') +
+      '</optgroup>'
+    );
+  }
+
+  function interviewHtml(p) {
+    const c = state.clients.find((x) => x.id === p.clientId);
+    const head = '<div class="sec-head"><h3>Interview the client</h3>' + (c ? '<span class="muted small">Speaking with ' + esc(c.name) + '</span>' : '') + '</div>';
+    if (!sampleFn) {
+      return '<div class="sec">' + head + '<p class="muted small">The simulated client is not available here. Type the answers into the brief yourself, as if you had asked the client in person.</p></div>';
+    }
+    const talk = (p.brief && p.brief.talk) || [];
+    const opts = answerTargets(p);
+    const turns = talk
+      .map(
+        (t, i) =>
+          '<div class="turn"><p class="turn-q">' + esc(t.q) + '</p><p class="turn-a">' + esc(t.a) + '</p><div class="turn-save"><select id="tk-' + i + '" class="sel-sm" data-keep aria-label="Where to save this answer">' + opts +
+          '</select><button type="button" class="btn quiet sm" data-action="save-turn" data-i="' + i + '">Save to brief</button></div></div>'
+      )
+      .join('');
+    const chips = L.nextQuestions(p, 3)
+      .map((q) => '<button type="button" class="chip-btn" data-action="fill-ask" data-q="' + esc(q.label) + '">' + esc(q.label) + '</button>')
+      .join('');
+    return (
+      '<div class="sec">' + head +
+      '<p class="muted small">Ask a question as you would in a meeting. The client answers from their own story. Save the useful answers into the brief below. The first question asks your permission to use Claude on this page.</p>' +
+      (turns ? '<div class="talk">' + turns + '</div>' : '') +
+      '<form class="ask-form" data-form="ask-client" data-id="' + esc(p.id) + '"><input type="text" id="ask-q" data-keep required placeholder="Ask the client a question" aria-label="Question for the client" maxlength="300" autocomplete="off"' + (ui.asking ? ' disabled' : '') + '>' +
+      '<button type="submit" class="btn sm"' + (ui.asking ? ' disabled' : '') + '>' + (ui.asking ? 'Asking' : 'Ask') + '</button></form>' +
+      (ui.asking ? '<p class="muted small" role="status">The client is thinking about it.</p>' : '') +
+      (ui.askNote ? '<p class="problems" role="alert">' + esc(ui.askNote) + '</p>' : '') +
+      (chips ? '<div class="chips"><span class="muted small">Not sure what to ask? Start here:</span>' + chips + '</div>' : '') +
+      '</div>'
+    );
+  }
+
+  function briefHtml(p) {
+    const bs = L.briefState(p);
+    const chosen = p.stages.map((s) => s.key);
+    const older = chosen.some((k) => !L.DELIVERABLES.some((d) => d.key === k));
+    const pct = Math.round((bs.essentialsDone / bs.essentialsTotal) * 100);
+    const pill = bs.complete ? '<span class="pill ready">Brief complete</span>' : '<span class="pill">' + bs.essentialsDone + ' of ' + bs.essentialsTotal + ' essential answers</span>';
+    const picker = L.DELIVERABLES.map(
+      (d) =>
+        '<label class="check dv"><input type="checkbox" data-change="set-deliverable" data-key="' + d.key + '"' + (chosen.indexOf(d.key) !== -1 ? ' checked' : '') + (p.locked ? ' disabled' : '') +
+        '><span><strong>' + esc(d.name) + '</strong><span class="hint">' + esc(d.purpose) + '</span></span></label>'
+    ).join('');
+    const demands = L.DELIVERABLES.filter((d) => chosen.indexOf(d.key) !== -1)
+      .map((d) => {
+        const v = p.brief && p.brief.demands && typeof p.brief.demands[d.key] === 'string' ? p.brief.demands[d.key] : '';
+        return (
+          '<label class="f">' + esc(d.name) + '<span class="hint">What do they expect from this, in their own words?</span><textarea id="dm-' + d.key + '" data-keep data-change="brief-demand" data-key="' + d.key +
+          '" maxlength="500" placeholder="' + esc(d.example) + '">' + esc(v) + '</textarea></label>'
+        );
+      })
+      .join('');
+    const groups = L.BRIEF_GROUPS.map((g) => {
+      const open = !!ui.open['bg:' + p.id + ':' + g.key];
+      const miss = g.questions.filter((q) => q.essential && !L.isAnswered(p, q.key)).length;
+      return (
+        '<div class="grp"><button type="button" class="grp-head" data-action="toggle-group" data-id="' + esc(p.id) + '" data-group="' + g.key + '" aria-expanded="' + open + '"><span>' + esc(g.title) +
+        '</span><span class="muted small">' + (miss ? miss + ' essential to go' : 'Essentials done') + '</span></button>' +
+        (open ? '<div class="stack grp-body">' + g.questions.map((q) => questionHtml(p, q)).join('') + '</div>' : '') + '</div>'
+      );
+    }).join('');
+    return (
+      '<section class="card sec"><div class="sec-head"><h2>Client brief</h2>' + pill + '</div>' +
+      '<p class="muted">Take the full brief before agreeing any date. Dates and deliverables lock only when every essential answer is in.</p>' +
+      '<div class="meter' + (bs.complete ? '' : ' warn') + '"><span style="width:' + pct + '%"></span></div>' +
+      '<div class="sec"><h3>What the client wants delivered</h3>' +
+      (older && !p.locked ? '<p class="muted small">This project uses the older stage list. Choosing deliverables replaces it.</p>' : '') +
+      '<div class="dv-grid">' + picker + '</div>' +
+      '<p class="muted small">' + (p.locked ? 'Deliverables are locked together with the dates.' : 'Changing the deliverables suggests new dates for all of them.') + '</p></div>' +
+      interviewHtml(p) +
+      (demands ? '<div class="sec"><h3>What they expect, in their own words</h3><div class="stack">' + demands + '</div></div>' : '') +
+      '<div class="sec"><h3>Brief questions</h3><div class="grps">' + groups + '</div></div></section>'
+    );
+  }
+
+  async function askClient(projectId) {
+    const p = getProject(projectId);
+    const inp = $('#ask-q');
+    const q = inp ? inp.value.trim() : '';
+    if (!p || !q || !sampleFn || ui.asking) return;
+    const c = state.clients.find((x) => x.id === p.clientId);
+    const talk = (p.brief && p.brief.talk) || [];
+    ui.asking = true;
+    ui.askNote = '';
+    render();
+    try {
+      const r = await sampleFn(L.interviewPrompt(c, p, talk, q), { cache: false, modelTier: 'quick' });
+      const a = String((r && r.text) || '').trim();
+      if (!a) throw { code: 'empty_completion' };
+      const next = talk.concat([{ q: q, a: a, t: nowISO() }]).slice(-40);
+      await store.update('projects', projectId, { brief: { talk: next } });
+      if (inp) inp.value = '';
+    } catch (e) {
+      const code = e && e.code;
+      if (code === 'not_granted') ui.askNote = 'You chose not to let the client answer. Ask again if you change your mind, or type the answers into the brief yourself.';
+      else if (code === 'rate_limited') ui.askNote = 'Too many questions in a short time. Wait a moment and ask again.';
+      else if (code === 'session_expired') ui.askNote = 'Your session expired. Reload the page and try again.';
+      else if (code === 'refused' || code === 'empty_completion') ui.askNote = 'The client had no answer to that. Try asking it another way.';
+      else if (code === 'sampling_disabled' || code === 'not_declared' || code === 'capability_disabled' || code === 'capability_removed') {
+        sampleFn = null;
+      } else ui.askNote = 'The client could not answer just now. Try again.';
+    } finally {
+      ui.asking = false;
+      render();
+      const again = $('#ask-q');
+      if (again && !sampleFn === false) again.focus();
+    }
+  }
+
+  function renderProject() {
+    const p = state.projects.find((x) => x.id === ui.projectId);
+    if (!p) {
+      ui.projectId = null;
+      return renderProjects();
+    }
+    const today = L.todayISO();
+    ensureBriefOpen(p);
+    const sum = L.projectSummary(p, state.tasks, today);
+    const c = state.clients.find((x) => x.id === p.clientId);
+
+    const facts =
+      '<div class="card" style="display:flex;gap:20px 36px;flex-wrap:wrap;align-items:flex-start"><div class="facts" style="flex-direction:column;gap:6px"><span>Delivery <b>' + esc(L.fmtDay(p.end)) + '</b></span>' +
+      '<span>Dates <b>' + (p.locked ? 'Locked ' + esc(L.fmt(L.todayISO(new Date(p.lockedAt)))) : 'Not locked yet') + '</b></span><span>Deliverables <b>' + sum.doneCount + ' of ' + p.stages.length + ' delivered</b></span></div>' +
+      '<div style="flex:1;min-width:230px;display:flex;flex-direction:column;gap:8px">' + moodHtml(p, true) + '</div></div>';
+
+    let portfolio = '';
+    if (sum.status === 'delivered') {
+      const checks = (p.portfolio && p.portfolio.checks) || {};
+      portfolio =
+        '<section class="card sec"><div class="sec-head"><h2>Portfolio check</h2>' + (p.portfolio && p.portfolio.ready ? '<span class="pill ready">Portfolio-ready</span>' : '<span class="pill">Not ready yet</span>') + '</div>' +
+        '<p class="muted">This project is delivered. Before it goes on the website, it has to show what the studio stands for: lively, positive homes.</p>' +
+        '<div class="stack">' +
+        L.PORTFOLIO_CHECKS.map((c2) => '<label class="check"><input type="checkbox" data-change="portfolio-check" data-key="' + c2.key + '"' + (checks[c2.key] ? ' checked' : '') + '><span>' + esc(c2.label) + '</span></label>').join('') +
+        '</div></section>';
+    }
+
+    const log = (p.log || []).slice(-12).reverse();
+    const logHtml =
+      '<section class="sec"><h2>Activity</h2><div class="log">' +
+      log.map((e) => '<div><div class="when">' + esc(L.fmt(L.todayISO(new Date(e.t)))) + '</div><div>' + esc(e.text) + '</div>' + (e.reaction ? '<p class="quote">' + esc(e.reaction) + '</p>' : '') + '</div>').join('') +
+      '</div></section>';
+
+    return (
+      '<div><button type="button" class="btn line sm" data-action="back">All projects</button></div>' +
+      '<div class="head-row"><div><h1 class="view-title">' + esc(p.name) + '</h1><p class="muted" style="margin-top:6px">' + esc(c ? c.name : 'Unknown client') + (c && c.need ? '. ' + esc(c.need) : '') + '</p></div><div class="acts">' + exampleTag(p) + projectPill(sum) + '</div></div>' +
+      facts + briefHtml(p) + (p.locked ? '' : planHtml(p)) +
+      '<section class="sec"><h2>Deliverables</h2><div class="stages">' + p.stages.map((_, i) => stageHtml(p, i, sum)).join('') + '</div></section>' +
+      portfolio + logHtml
+    );
+  }
+
+  function renderTeam() {
+    const head = '<div class="head-row"><h1 class="view-title">Team</h1><button type="button" class="btn" data-action="new-member">Add a team member</button></div>';
+    if (!state.team.length) {
+      return head + '<div class="empty"><h3>No one on the team yet</h3><p>Add the people who work on your projects. You can assign tasks to them, and each person sees their own tasks on Today.</p><button type="button" class="btn" data-action="new-member">Add a team member</button></div>';
+    }
+    const pb = byId(state.projects);
+    const unassigned = state.tasks.filter((t) => !t.done && !t.assigneeId).length;
+    return (
+      head +
+      (unassigned ? '<p class="muted">' + L.plural(unassigned, 'open task has', 'open tasks have') + ' no one assigned.</p>' : '') +
+      '<div class="people">' +
+      state.team
+        .map((m) => {
+          const st = L.memberStats(m.id, state.tasks, state.projects);
+          const mine = state.tasks.filter((t) => t.assigneeId === m.id && !t.done).slice(0, 5);
+          return (
+            '<div class="card person"><div><h3>' + esc(m.name) + '</h3><div class="muted small">' + esc(m.role || 'Team member') + '</div></div>' +
+            '<div class="stat-row"><div><b>' + st.open + '</b>Open</div><div><b>' + st.done + '</b>Done</div><div><b>' + (st.onTimeRate === null ? 'None yet' : st.onTimeRate + '%') + '</b>On time</div></div>' +
+            (mine.length ? '<div class="rows">' + mine.map((t) => '<div class="row">' + taskRow(t, pb[t.projectId]) + '</div>').join('') + '</div>' : '<p class="muted small">No open tasks.</p>') +
+            '<div>' + armButton('member:' + m.id, 'remove-member', m.id) + '</div></div>'
+          );
+        })
+        .join('') +
+      '</div>'
+    );
+  }
+
+  function renderClients() {
+    const head = '<div class="head-row"><h1 class="view-title">Clients</h1><button type="button" class="btn" data-action="new-client">Add a client</button></div>';
+    if (!state.clients.length) {
+      return head + '<div class="empty"><h3>No clients yet</h3><p>A client is a household with a need, an emotional goal and a worry. The manager uses these to write the client\'s reactions as you deliver.</p><button type="button" class="btn" data-action="new-client">Add a client</button></div>';
+    }
+    return (
+      head +
+      '<div class="people">' +
+      state.clients
+        .map((c) => {
+          const projects = state.projects.filter((p) => p.clientId === c.id);
+          const rows = [['Household', c.type], ['Budget', c.budget], ['Taste', c.taste], ['Need', c.need], ['Main worry', c.worry]].filter((r) => r[1]);
+          return (
+            '<div class="card person"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><h3>' + esc(c.name) + '</h3>' + exampleTag(c) + '</div>' +
+            '<dl class="kv">' + rows.map((r) => '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>').join('') + '</dl>' +
+            (projects.length ? '<div class="rows">' + projects.map((p) => '<div class="row">' + '<div class="muted small" style="margin-bottom:6px">' + esc(p.name) + '</div>' + moodHtml(p, false) + '</div>').join('') + '</div>' : '<p class="muted small">No projects yet.</p>') +
+            '<div>' + armButton('client:' + c.id, 'remove-client', c.id) + '</div></div>'
+          );
+        })
+        .join('') +
+      '</div>'
+    );
+  }
+
+  function renderStudio() {
+    const hasExample = [].concat(state.clients, state.projects, state.tasks).some((x) => x.example);
+    const stageChecks = L.DELIVERABLES.map(
+      (s) =>
+        '<details class="acc"><summary>' + esc(s.name) + '</summary><ul>' + L.checksFor(s.key, null).map((c) => '<li>' + esc(c.label) + '</li>').join('') + '</ul></details>'
+    ).join('');
+    return (
+      '<h1 class="view-title">Studio</h1>' +
+      '<section class="card sec"><label class="f">Studio name<input type="text" id="studio-name" data-keep data-change="studio-name" maxlength="60" value="' + esc(state.studio.name || '') + '" placeholder="Your studio"></label></section>' +
+      '<section class="sec"><h2>What we stand for</h2><p style="max-width:62ch">Give every client the best lively environment. Our interiors are made for Indian homes: rich in fabric, wood and stone, full of color and positive energy.</p></section>' +
+      '<section class="sec"><div><h2>Quality gate, by deliverable</h2><p class="muted">Before a deliverable goes out, every check for it must be true, plus what the client asked for in the brief. Anything unmet sends it back.</p></div><div>' + stageChecks + '</div></section>' +
+      '<section class="sec"><div><h2>The client brief</h2><p class="muted">Dates lock only after these essentials are answered.</p></div><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px">' + L.BRIEF_QUESTIONS.filter((q) => q.essential).map((q) => '<li>' + esc(q.label) + '</li>').join('') + '</ul></section>' +
+      '<section class="sec"><div><h2>Portfolio gate</h2><p class="muted">Applies to every finished project before it goes on the website.</p></div><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px">' +
+      L.PORTFOLIO_CHECKS.map((c) => '<li>' + esc(c.label) + '</li>').join('') + '</ul></section>' +
+      (hasExample ? '<section class="sec"><h2>Example data</h2><p class="muted">The clients, project and tasks marked Example show how the app works. Remove them when you are ready to start with your own.</p><div>' + armButton('examples', 'remove-examples', 'all', 'Remove example data') + '</div></section>' : '')
+    );
+  }
+
+  const NAV = [['today', 'Today'], ['projects', 'Projects'], ['team', 'Team'], ['clients', 'Clients'], ['studio', 'Studio']];
+
+  function renderChrome() {
+    $('#nav').innerHTML = NAV.map((n) => '<button type="button" data-action="nav" data-view="' + n[0] + '"' + (ui.view === n[0] ? ' aria-current="page"' : '') + '>' + n[1] + '</button>').join('');
+    $('#studio-name').textContent = state.studio.name || 'Your studio';
+    $('#sync').textContent = !state.ready ? 'Opening' : state.shared ? 'Shared with your team' : 'Saved on this device only';
+    $('#banner').hidden = state.canWrite !== false;
+  }
+
+  function capture(root) {
+    const out = [];
+    root.querySelectorAll('[data-keep]').forEach((el) => {
+      if (!el.id) return;
+      out.push({ id: el.id, value: el.value, focused: document.activeElement === el, a: el.selectionStart, b: el.selectionEnd });
+    });
+    return out;
+  }
+  function restore(root, saved) {
+    saved.forEach((s) => {
+      const el = root.querySelector('#' + CSS.escape(s.id));
+      if (!el) return;
+      if (s.value !== el.value && el.tagName !== 'SELECT') el.value = s.value;
+      if (el.tagName === 'SELECT' && s.value) el.value = s.value;
+      if (s.focused) {
+        el.focus();
+        try {
+          if (s.a != null) el.setSelectionRange(s.a, s.b);
+        } catch (e) {}
+      }
+    });
+  }
+
+  function render() {
+    const view = $('#view');
+    renderChrome();
+    if (state.failed) {
+      view.innerHTML = '<div class="empty"><h3>The studio could not be opened</h3><p>' + esc(state.failed) + ' Reload the page to try again.</p></div>';
+      return;
+    }
+    if (!state.ready) {
+      view.innerHTML = '<p class="loading">Opening your studio.</p>';
+      return;
+    }
+    const saved = capture(view);
+    let html;
+    if (ui.view === 'today') html = renderToday();
+    else if (ui.view === 'projects') html = ui.projectId ? renderProject() : renderProjects();
+    else if (ui.view === 'team') html = renderTeam();
+    else if (ui.view === 'clients') html = renderClients();
+    else html = renderStudio();
+    view.innerHTML = html;
+    restore(view, saved);
+  }
+
+  // ---------- Modals ----------
+  let opener = null;
+  function openModal(title, bodyHtml) {
+    closeModal(true);
+    opener = document.activeElement;
+    const root = $('#modal-root');
+    root.innerHTML = '<div class="scrim" data-action="modal-close"></div><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="m-title"><h2 id="m-title">' + esc(title) + '</h2>' + bodyHtml + '</div>';
+    root.hidden = false;
+    const first = root.querySelector('input:not([type=checkbox]), textarea, select, input[type=checkbox], button');
+    if (first) first.focus();
+  }
+  function closeModal(silent) {
+    const root = $('#modal-root');
+    root.hidden = true;
+    root.innerHTML = '';
+    if (!silent && opener && opener.focus && document.contains(opener)) opener.focus();
+  }
+  const foot = (primary, extra) =>
+    '<div class="foot"><button type="button" class="btn line" data-action="modal-close">Cancel</button>' + (extra || '') + '<button type="submit" class="btn" data-role="submit">' + esc(primary) + '</button></div>';
+  const errLine = '<p class="problems" data-role="err" role="alert"></p>';
+  const field = (label, id, extra, hint) =>
+    '<label class="f">' + esc(label) + (hint ? '<span class="hint">' + esc(hint) + '</span>' : '') + '<input type="text" id="' + id + '" name="' + id + '" ' + (extra || '') + '></label>';
+
+  function modalClient() {
+    openModal(
+      'Add a client',
+      '<form class="stack" data-form="new-client">' +
+        field('Household or client name', 'name', 'required maxlength="60" placeholder="The Mehta family"') +
+        '<div class="fgrid">' + field('Household type', 'type', 'maxlength="60" placeholder="Joint family, young couple"') + field('Budget', 'budget', 'maxlength="60" placeholder="18 to 25 lakh"') + '</div>' +
+        field('Taste', 'taste', 'maxlength="120" placeholder="Bold color, handloom, brass"') +
+        '<label class="f">What they need, emotionally<span class="hint">One or two sentences in their own words.</span><textarea id="need" name="need" required maxlength="300"></textarea></label>' +
+        field('Main worry', 'worry', 'maxlength="120" placeholder="the rooms will feel crowded"', 'Finish the sentence: "My worry is that..."') +
+        errLine + foot('Add client') + '</form>'
+    );
+  }
+
+  function modalMember() {
+    openModal(
+      'Add a team member',
+      '<form class="stack" data-form="new-member">' +
+        field('Name', 'name', 'required maxlength="60"') +
+        '<label class="f">Role<input type="text" id="role" name="role" list="roles" maxlength="60" placeholder="3D artist"></label>' +
+        '<datalist id="roles"><option value="Designer"><option value="3D artist"><option value="Visualizer"><option value="Project coordinator"><option value="Site supervisor"></datalist>' +
+        errLine + foot('Add member') + '</form>'
+    );
+  }
+
+  function modalProject() {
+    if (!state.clients.length) {
+      toast('Add a client first. Every project belongs to one.', 'error');
+      return;
+    }
+    const today = L.todayISO();
+    openModal(
+      'New project',
+      '<form class="stack" data-form="new-project">' +
+        field('Project name', 'name', 'required maxlength="80" placeholder="Mehta 3BHK, Ahmedabad"') +
+        '<label class="f">Client<select id="client" name="client" required>' + state.clients.map((c) => '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>').join('') + '</select></label>' +
+        '<div class="fgrid"><label class="f">Start date<input type="date" id="start" name="start" required value="' + today + '"></label>' +
+        '<label class="f">Delivery date<input type="date" id="end" name="end" required value="' + L.addDays(today, 56) + '"></label></div>' +
+        '<fieldset class="dv-set"><legend>What the client wants delivered</legend><div class="dv-grid">' +
+        L.DELIVERABLES.map((d) => '<label class="check dv"><input type="checkbox" name="dv" value="' + d.key + '"' + (L.CORE_DELIVERABLES.indexOf(d.key) !== -1 ? ' checked' : '') + '><span><strong>' + esc(d.name) + '</strong><span class="hint">' + esc(d.purpose) + '</span></span></label>').join('') +
+        '</div></fieldset>' +
+        '<p class="muted small">I will suggest a date for each deliverable. Take the full brief next, then agree and lock the dates.</p>' +
+        errLine + foot('Create project') + '</form>'
+    );
+  }
+
+  function modalReview(p, stageKey) {
+    const def = L.stageDef(stageKey);
+    const checks = L.checksFor(stageKey, p);
+    openModal(
+      'Review: ' + def.name,
+      '<form class="stack" data-form="review" data-id="' + esc(p.id) + '" data-stage="' + esc(stageKey) + '">' +
+        '<p class="muted">Tick what is true for this stage. Anything unticked sends it back to work and the client hears about the delay.</p>' +
+        checks.map((c) => '<label class="check"><input type="checkbox" name="chk" value="' + c.key + '" data-change="review-sync"><span>' + esc(c.label) + '<span class="hint">' + esc(c.hint) + '</span></span></label>').join('') +
+        errLine + foot('Send back for fixes') + '</form>'
+    );
+    syncReview();
+  }
+  function syncReview() {
+    const root = $('#modal-root');
+    const boxes = Array.prototype.slice.call(root.querySelectorAll('input[name=chk]'));
+    const btn = root.querySelector('[data-role=submit]');
+    if (!btn || !boxes.length) return;
+    const all = boxes.every((b) => b.checked);
+    btn.textContent = all ? 'Pass and deliver' : 'Send back for fixes';
+    btn.classList.toggle('danger', !all);
+  }
+
+  function modalDate(p, stageKey) {
+    const idx = p.stages.findIndex((s) => s.key === stageKey);
+    const st = p.stages[idx];
+    const lower = idx > 0 ? p.stages[idx - 1].deadline : p.start;
+    const upper = idx < p.stages.length - 1 ? p.stages[idx + 1].deadline : null;
+    openModal(
+      'Change date: ' + L.stageDef(stageKey).name,
+      '<form class="stack" data-form="change-date" data-id="' + esc(p.id) + '" data-stage="' + esc(stageKey) + '">' +
+        '<p class="muted">Currently ' + esc(L.fmtDay(st.deadline)) + '. You can pick a date from ' + esc(L.fmt(lower)) + (upper ? ' to ' + esc(L.fmt(upper)) : ' onward') + '.</p>' +
+        '<label class="f">New date<input type="date" id="cd-date" name="date" required value="' + esc(st.deadline) + '"></label>' +
+        (p.locked
+          ? '<label class="f">Reason<span class="hint">Goes in the log, and the client reads it. Moving a date later lowers their mood.</span><textarea id="cd-reason" name="reason" required maxlength="200"></textarea></label>'
+          : '') +
+        errLine + foot('Change date') + '</form>'
+    );
+  }
+
+  // ---------- Actions ----------
+  async function run(fn) {
+    try {
+      await fn();
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    }
+  }
+
+  const getProject = (id) => state.projects.find((p) => p.id === id);
+
+  function setView(v, projectId) {
+    ui.view = v;
+    ui.projectId = projectId || null;
+    prefs.set('view', v);
+    window.scrollTo(0, 0);
+    render();
+  }
+
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
+    const a = el.dataset.action;
+    if (ui.armed && a !== 'arm' && !/^remove-/.test(a)) {
+      ui.armed = null;
+      clearTimeout(armTimer);
+    }
+    const id = el.dataset.id;
+    switch (a) {
+      case 'nav':
+        return setView(el.dataset.view, null);
+      case 'back':
+        return setView('projects', null);
+      case 'open-project':
+        return setView('projects', id);
+      case 'modal-close':
+        return closeModal();
+      case 'new-client':
+        return modalClient();
+      case 'new-member':
+        return modalMember();
+      case 'new-project':
+        return modalProject();
+      case 'arm':
+        ui.armed = el.dataset.key;
+        clearTimeout(armTimer);
+        armTimer = setTimeout(() => {
+          ui.armed = null;
+          render();
+        }, 5000);
+        return render();
+      case 'toggle-stage': {
+        const p = getProject(id);
+        if (!p) return;
+        const sum = L.projectSummary(p, state.tasks, L.todayISO());
+        const i = p.stages.findIndex((s) => s.key === el.dataset.stage);
+        ui.open[p.id + ':' + el.dataset.stage] = !isStageOpen(p, i, sum);
+        return render();
+      }
+      case 'deliver-stage': {
+        const p = getProject(id);
+        if (!p) return;
+        if (!p.locked) return toast('Lock the dates before delivering anything.', 'error');
+        const cur = L.currentIndex(p);
+        if (cur === -1) return;
+        return modalReview(p, p.stages[cur].key);
+      }
+      case 'change-date': {
+        const p = getProject(id);
+        if (p) modalDate(p, el.dataset.stage);
+        return;
+      }
+      case 'propose-dates':
+        return run(async () => {
+          const p = getProject(ui.projectId);
+          const s = $('#plan-start').value;
+          const en = $('#plan-end').value;
+          if (!L.isISO(s) || !L.isISO(en)) return toast('Pick a start date and a delivery date.', 'error');
+          const dates = L.proposeDates(s, en, p.stages.map((x) => x.key));
+          if (!dates) return toast('The delivery date has to be after the start date.', 'error');
+          await saveProject(Object.assign({}, p, { start: s, end: en, stages: p.stages.map((st, i) => Object.assign({}, st, { deadline: dates[i] })) }));
+          toast('Dates suggested. Adjust any of them, then lock.');
+        });
+      case 'toggle-group': {
+        const k = 'bg:' + id + ':' + el.dataset.group;
+        ui.open[k] = !ui.open[k];
+        return render();
+      }
+      case 'fill-ask': {
+        const inp = $('#ask-q');
+        if (inp) {
+          inp.value = el.dataset.q;
+          inp.focus();
+        }
+        return;
+      }
+      case 'save-turn':
+        return run(async () => {
+          const p = getProject(id);
+          const t = p && p.brief && p.brief.talk && p.brief.talk[Number(el.dataset.i)];
+          const sel = $('#tk-' + el.dataset.i);
+          if (!t || !sel || !sel.value) return toast('Pick where to save this answer.', 'error');
+          const parts = sel.value.split(':');
+          const patch = parts[0] === 'd' ? { brief: { demands: { [parts[1]]: t.a } } } : { brief: { answers: { [parts[1]]: t.a } } };
+          await store.update('projects', id, patch);
+          toast('Saved to the brief.');
+        });
+      case 'lock-dates':
+        return run(async () => {
+          const p = getProject(ui.projectId);
+          const r = L.lockProject(p, clientCtx(p), nowISO());
+          if (r.error) return toast(r.error, 'error');
+          await saveProject(r.project);
+          toast('Dates locked. I will hold every one of them.');
+        });
+      case 'remove-task':
+        ui.armed = null;
+        return run(() => store.remove('tasks', id));
+      case 'remove-member':
+        ui.armed = null;
+        return run(async () => {
+          const mine = state.tasks.filter((t) => t.assigneeId === id);
+          for (const t of mine) await store.update('tasks', t.id, { assigneeId: '' });
+          await store.remove('team', id);
+        });
+      case 'remove-client':
+        ui.armed = null;
+        return run(async () => {
+          if (state.projects.some((p) => p.clientId === id)) return toast('Remove or finish this client\'s projects first.', 'error');
+          await store.remove('clients', id);
+        });
+      case 'remove-examples':
+        ui.armed = null;
+        return run(async () => {
+          const ex = (c, arr) => arr.filter((x) => x.example).map((x) => store.remove(c, x.id));
+          await Promise.all([].concat(ex('tasks', state.tasks), ex('projects', state.projects), ex('clients', state.clients)));
+          ui.projectId = null;
+          toast('Example data removed.');
+        });
+    }
+  });
+
+  document.addEventListener('change', (e) => {
+    const el = e.target.closest('[data-change]');
+    if (!el) return;
+    const kind = el.dataset.change;
+    if (kind === 'review-sync') return syncReview();
+    if (kind === 'view-as') {
+      ui.viewAs = el.value;
+      prefs.set('viewAs', el.value);
+      return render();
+    }
+    run(async () => {
+      if (kind === 'toggle-task') {
+        await store.update('tasks', el.dataset.id, { done: el.checked, doneAt: el.checked ? L.todayISO() : null });
+      } else if (kind === 'assign-task') {
+        await store.update('tasks', el.dataset.id, { assigneeId: el.value });
+      } else if (kind === 'studio-name') {
+        await store.set('settings', 'studio', { name: el.value.trim() });
+      } else if (kind === 'set-stage-date') {
+        const p = getProject(ui.projectId);
+        if (!p || !L.isISO(el.value)) return;
+        const stages = p.stages.map((s) => (s.key === el.dataset.stage ? Object.assign({}, s, { deadline: el.value }) : s));
+        const last = stages[stages.length - 1].deadline;
+        await saveProject(Object.assign({}, p, { stages: stages, end: last }));
+      } else if (kind === 'brief-answer') {
+        await store.update('projects', ui.projectId, { brief: { answers: { [el.dataset.key]: el.value.trim() } } });
+      } else if (kind === 'brief-demand') {
+        await store.update('projects', ui.projectId, { brief: { demands: { [el.dataset.key]: el.value.trim() } } });
+      } else if (kind === 'set-deliverable') {
+        const p = getProject(ui.projectId);
+        const keys = Array.prototype.slice.call(document.querySelectorAll('input[data-change=set-deliverable]:checked')).map((i) => i.dataset.key);
+        const r = L.setDeliverables(p, keys);
+        if (r.error) {
+          toast(r.error, 'error');
+          return render();
+        }
+        await saveProject(r.project);
+      } else if (kind === 'portfolio-check') {
+        const p = getProject(ui.projectId);
+        const pf = L.setPortfolioCheck(p, el.dataset.key, el.checked, nowISO());
+        let next = Object.assign({}, p, { portfolio: pf });
+        if (pf.ready && !(p.portfolio && p.portfolio.ready)) {
+          next = L.applyEvent(next, { t: nowISO(), type: 'portfolio', stageKey: null, text: 'Marked portfolio-ready', delta: 0, reaction: '' });
+          toast('Portfolio-ready. This one can go on the website.');
+        }
+        await saveProject(next);
+      }
+    });
+  });
+
+  document.addEventListener('submit', (e) => {
+    const form = e.target.closest('[data-form]');
+    if (!form) return;
+    e.preventDefault();
+    const kind = form.dataset.form;
+    const fd = new FormData(form);
+    const val = (k) => String(fd.get(k) || '').trim();
+    const fail = (msg) => {
+      const o = form.querySelector('[data-role=err]');
+      if (o) o.textContent = msg;
+    };
+    run(async () => {
+      if (kind === 'new-client') {
+        const name = val('name');
+        const need = val('need');
+        if (!name || !need) return fail('Give the client a name and their need.');
+        await store.set('clients', newId('c'), { name: name, type: val('type'), budget: val('budget'), taste: val('taste'), need: need, worry: val('worry'), created: nowISO() });
+        closeModal();
+        toast('Client added.');
+      } else if (kind === 'new-member') {
+        const name = val('name');
+        if (!name) return fail('Give the team member a name.');
+        await store.set('team', newId('m'), { name: name, role: val('role') });
+        closeModal();
+        toast('Team member added.');
+      } else if (kind === 'new-project') {
+        const name = val('name');
+        const start = val('start');
+        const end = val('end');
+        if (!name) return fail('Give the project a name.');
+        if (!L.isISO(start) || !L.isISO(end) || L.daysBetween(start, end) < 1) return fail('The delivery date has to be after the start date.');
+        const dv = fd.getAll('dv').map(String);
+        if (!dv.length) return fail('Choose at least one deliverable.');
+        const doc = L.newProject({ name: name, clientId: val('client'), start: start, end: end, deliverables: dv, nowISO: nowISO() });
+        const id = newId('p');
+        await store.set('projects', id, doc);
+        closeModal();
+        setView('projects', id);
+        toast('Project created. Take the full brief next.');
+      } else if (kind === 'add-task') {
+        const input = form.querySelector('input[type=text]');
+        const sel = form.querySelector('select');
+        const t = input.value.trim();
+        if (!t) return;
+        await store.set('tasks', newId('t'), { projectId: form.dataset.id, stageKey: form.dataset.stage, title: t, assigneeId: sel.value, done: false, doneAt: null, due: null, created: nowISO() });
+        input.value = '';
+        input.focus();
+      } else if (kind === 'review') {
+        const p = getProject(form.dataset.id);
+        const checked = Array.prototype.slice.call(form.querySelectorAll('input[name=chk]:checked')).map((i) => i.value);
+        const r = L.deliverStage(p, form.dataset.stage, checked, clientCtx(p), L.todayISO(), nowISO());
+        if (r.error) return fail(r.error);
+        await saveProject(r.project);
+        closeModal();
+        if (r.passed) toast(r.late ? 'Delivered, ' + L.plural(r.lateDays, 'day', 'days') + ' late. The client noticed.' : 'Delivered on time. The client is pleased.');
+        else toast('Sent back to work: ' + L.plural(r.missing.length, 'check', 'checks') + ' not met.');
+      } else if (kind === 'ask-client') {
+        await askClient(form.dataset.id);
+      } else if (kind === 'change-date') {
+        const p = getProject(form.dataset.id);
+        const r = L.changeDate(p, form.dataset.stage, val('date'), val('reason'), clientCtx(p), nowISO());
+        if (r.error) return fail(r.error);
+        await saveProject(r.project);
+        closeModal();
+        toast('Date changed and logged.');
+      }
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('#modal-root').hidden) closeModal();
+  });
+
+  // ---------- Start ----------
+  async function boot() {
+    render();
+    let db = null;
+    let user = null;
+    try {
+      if (window.claude && window.claude.use) {
+        db = await window.claude.use('db');
+        user = await window.claude.use('user');
+        try {
+          sampleFn = await window.claude.use('sample');
+        } catch (e) {
+          sampleFn = null;
+        }
+      }
+    } catch (e) {
+      db = null;
+    }
+    if (user && db) {
+      try {
+        state.canWrite = await user.can('data.write');
+      } catch (e) {
+        state.canWrite = null;
+      }
+    }
+    connect(db ? makeDbStore(db) : makeLocalStore());
+  }
+  boot();
+})();
+
+</script>
+
+</body>
+</html>

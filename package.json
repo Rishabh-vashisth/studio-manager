@@ -1,0 +1,15 @@
+{
+  "name": "studio-manager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Studio Manager: briefs, deliverables, deadlines and quality gates for an interior design studio.",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node test.js",
+    "smoke": "npm run build && node scripts/smoke.js",
+    "start": "npm run build && npx --yes serve public"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  }
+}
